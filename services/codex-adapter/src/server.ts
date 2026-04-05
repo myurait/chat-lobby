@@ -32,9 +32,10 @@ const PORT = Number(process.env.CODEX_ADAPTER_PORT ?? "8788");
 const HOST = process.env.CODEX_ADAPTER_HOST ?? "127.0.0.1";
 const CODEX_BIN = process.env.CODEX_CLI_BIN ?? "codex";
 const DEFAULT_SANDBOX_MODE =
-  (process.env.CODEX_SANDBOX_MODE as CodexTaskRequest["sandboxMode"] | undefined) ?? "danger-full-access";
+  (process.env.CODEX_SANDBOX_MODE as CodexTaskRequest["sandboxMode"] | undefined) ?? "workspace-write";
 const DEFAULT_SKIP_GIT_REPO_CHECK = process.env.CODEX_SKIP_GIT_REPO_CHECK !== "false";
-const DEFAULT_BYPASS_APPROVALS = process.env.CODEX_BYPASS_APPROVALS_AND_SANDBOX !== "false";
+const DEFAULT_BYPASS_APPROVALS = process.env.CODEX_BYPASS_APPROVALS_AND_SANDBOX === "true";
+const MAX_TASKS = Number(process.env.CODEX_ADAPTER_MAX_TASKS ?? "50");
 
 const tasks = new Map<string, CodexTaskRecord>();
 
@@ -113,6 +114,26 @@ function buildCodexCommand(task: CodexTaskRequest): string[] {
 
   command.push(task.prompt);
   return command;
+}
+
+function trimTasks() {
+  if (tasks.size < MAX_TASKS) {
+    return;
+  }
+
+  for (const [taskId, task] of tasks) {
+    if (task.state !== "running") {
+      tasks.delete(taskId);
+      if (tasks.size < MAX_TASKS) {
+        return;
+      }
+    }
+  }
+
+  const oldestTaskId = tasks.keys().next().value;
+  if (oldestTaskId) {
+    tasks.delete(oldestTaskId);
+  }
 }
 
 function parseCodexJsonl(stdout: string): unknown {
@@ -228,6 +249,7 @@ const server = createServer(async (request, response) => {
         createdAt: new Date().toISOString(),
       };
 
+      trimTasks();
       tasks.set(id, task);
       runTask(task, payload);
 

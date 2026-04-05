@@ -2,7 +2,7 @@
 
 This document defines the initial automatic routing rules used by `services/dispatcher`.
 
-The rule source is `services/dispatcher/rules.yaml`. The current file uses JSON-compatible YAML so the dispatcher can load it without adding a YAML parser dependency.
+The rule source is `services/dispatcher/rules.json`.
 
 ## Goal
 

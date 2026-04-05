@@ -1,4 +1,4 @@
-import { execFile } from "node:child_process";
+import { execFile, spawn } from "node:child_process";
 import { promisify } from "node:util";
 import { readFile } from "node:fs/promises";
 import { isAbsolute, relative, resolve } from "node:path";
@@ -98,39 +98,92 @@ async function handleSearch(request: SearchRequest) {
   const repoRoot = ensureRepoRoot(request.repoPath);
   const maxResults = Math.max(1, Math.min(request.maxResults ?? MAX_RESULTS, MAX_RESULTS));
 
-  let stdout = "";
-  try {
-    const result = await execFileAsync(
+  const items = await new Promise<
+    Array<{ path: string; relativePath: string; line: number; content: string }>
+  >((resolvePromise, rejectPromise) => {
+    const child = spawn(
       "rg",
-      ["-n", "--no-heading", "--color", "never", "--max-count", String(maxResults), request.query, repoRoot],
-      { maxBuffer: 1024 * 1024 },
+      ["-n", "--no-heading", "--color", "never", "--max-count", "1", "--", request.query, repoRoot],
+      { stdio: ["ignore", "pipe", "pipe"] },
     );
-    stdout = result.stdout;
-  } catch (error) {
-    const candidate = error as { code?: number; stdout?: string };
-    if (candidate.code !== 1) {
-      throw error;
-    }
-    stdout = candidate.stdout ?? "";
-  }
 
-  const items = stdout
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .map((line) => {
-      const first = line.indexOf(":");
-      const second = line.indexOf(":", first + 1);
-      const filePath = line.slice(0, first);
-      const lineNumber = Number(line.slice(first + 1, second));
-      const content = line.slice(second + 1);
-      return {
-        path: filePath,
-        relativePath: relative(repoRoot, filePath),
-        line: lineNumber,
-        content,
-      };
+    let stdoutBuffer = "";
+    let stderr = "";
+    const matches: Array<{ path: string; relativePath: string; line: number; content: string }> = [];
+    let settled = false;
+
+    const processBuffer = (flush: boolean) => {
+      const lines = stdoutBuffer.split("\n");
+      stdoutBuffer = flush ? "" : (lines.pop() ?? "");
+
+      for (const rawLine of lines) {
+        const line = rawLine.trim();
+        if (!line) {
+          continue;
+        }
+
+        const first = line.indexOf(":");
+        const second = line.indexOf(":", first + 1);
+        if (first === -1 || second === -1) {
+          continue;
+        }
+
+        const filePath = line.slice(0, first);
+        const lineNumber = Number(line.slice(first + 1, second));
+        const content = line.slice(second + 1);
+        matches.push({
+          path: filePath,
+          relativePath: relative(repoRoot, filePath),
+          line: lineNumber,
+          content,
+        });
+
+        if (matches.length >= maxResults && child.exitCode === null) {
+          child.kill();
+          break;
+        }
+      }
+    };
+
+    child.stdout.on("data", (chunk) => {
+      stdoutBuffer += chunk.toString();
+      processBuffer(false);
     });
+
+    child.stderr.on("data", (chunk) => {
+      stderr += chunk.toString();
+    });
+
+    child.on("error", (error) => {
+      if (!settled) {
+        settled = true;
+        rejectPromise(error);
+      }
+    });
+
+    child.on("close", (code, signal) => {
+      if (settled) {
+        return;
+      }
+
+      processBuffer(true);
+
+      if (signal === "SIGTERM" && matches.length >= maxResults) {
+        settled = true;
+        resolvePromise(matches.slice(0, maxResults));
+        return;
+      }
+
+      if (code !== 0 && code !== 1) {
+        settled = true;
+        rejectPromise(new Error(stderr.trim() || `rg exited with code ${code}`));
+        return;
+      }
+
+      settled = true;
+      resolvePromise(matches.slice(0, maxResults));
+    });
+  });
 
   if (items.length > 0) {
     return { repoRoot, items };

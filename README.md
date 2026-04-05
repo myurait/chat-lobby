@@ -144,6 +144,11 @@ The Codex adapter mirrors the Claude adapter pattern and wraps `codex exec --jso
 # Start the adapter for Open WebUI integration
 CODEX_ADAPTER_HOST=0.0.0.0 node services/codex-adapter/src/server.ts
 
+# Opt in to unattended execution only when you explicitly want it
+CODEX_ADAPTER_HOST=0.0.0.0 \
+CODEX_BYPASS_APPROVALS_AND_SANDBOX=true \
+node services/codex-adapter/src/server.ts
+
 # Create a Codex task
 curl -X POST http://127.0.0.1:8788/tasks \
   -H 'Content-Type: application/json' \
@@ -161,6 +166,9 @@ After syncing the pipe, select the `ChatLobby Codex Task` model in Open WebUI an
   "workingDirectory": "/Users/you/path/to/repo"
 }
 ```
+
+By default the adapter uses `workspace-write` sandboxing and does not bypass approvals. Set
+`CODEX_BYPASS_APPROVALS_AND_SANDBOX=true` only when you explicitly want unattended execution.
 
 ## Knowledge Adapter
 
@@ -186,9 +194,8 @@ After syncing the pipe, select the `ChatLobby Knowledge Query` model in Open Web
 
 ## Dispatcher
 
-The dispatcher applies rule-based routing from `services/dispatcher/rules.yaml` and chooses Claude, Codex,
-or knowledge automatically. The rule file uses JSON-compatible YAML so it can be loaded without adding a
-runtime YAML parser dependency.
+The dispatcher applies rule-based routing from `services/dispatcher/rules.json` and chooses Claude, Codex,
+or knowledge automatically.
 
 ```bash
 # Start the dispatcher for Open WebUI integration

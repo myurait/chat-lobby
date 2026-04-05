@@ -32,6 +32,7 @@ const PORT = Number(process.env.CLAUDE_ADAPTER_PORT ?? "8787");
 const HOST = process.env.CLAUDE_ADAPTER_HOST ?? "127.0.0.1";
 const CLAUDE_BIN = process.env.CLAUDE_CODE_BIN ?? "claude";
 const DEFAULT_PERMISSION_MODE = process.env.CLAUDE_PERMISSION_MODE ?? "acceptEdits";
+const MAX_TASKS = Number(process.env.CLAUDE_ADAPTER_MAX_TASKS ?? "50");
 
 const tasks = new Map<string, ClaudeTaskRecord>();
 
@@ -110,6 +111,26 @@ function buildClaudeCommand(task: ClaudeTaskRequest): string[] {
 
   command.push(task.prompt);
   return command;
+}
+
+function trimTasks() {
+  if (tasks.size < MAX_TASKS) {
+    return;
+  }
+
+  for (const [taskId, task] of tasks) {
+    if (task.state !== "running") {
+      tasks.delete(taskId);
+      if (tasks.size < MAX_TASKS) {
+        return;
+      }
+    }
+  }
+
+  const oldestTaskId = tasks.keys().next().value;
+  if (oldestTaskId) {
+    tasks.delete(oldestTaskId);
+  }
 }
 
 function runTask(task: ClaudeTaskRecord, request: ClaudeTaskRequest): void {
@@ -209,6 +230,7 @@ const server = createServer(async (request, response) => {
         createdAt: new Date().toISOString(),
       };
 
+      trimTasks();
       tasks.set(id, task);
       runTask(task, payload);
 

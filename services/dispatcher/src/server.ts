@@ -31,7 +31,16 @@ const CODEX_ADAPTER_URL = process.env.CODEX_ADAPTER_URL ?? "http://127.0.0.1:878
 const KNOWLEDGE_ADAPTER_URL = process.env.KNOWLEDGE_ADAPTER_URL ?? "http://127.0.0.1:8789";
 const POLL_INTERVAL_MS = Number(process.env.DISPATCHER_POLL_INTERVAL_MS ?? "1000");
 const POLL_TIMEOUT_MS = Number(process.env.DISPATCHER_POLL_TIMEOUT_MS ?? "180000");
-const RULES_FILE = process.env.DISPATCHER_RULES_FILE ?? resolve(process.cwd(), "services/dispatcher/rules.yaml");
+const RULES_FILE = process.env.DISPATCHER_RULES_FILE ?? resolve(process.cwd(), "services/dispatcher/rules.json");
+
+class HttpError extends Error {
+  readonly statusCode: number;
+
+  constructor(statusCode: number, message: string) {
+    super(message);
+    this.statusCode = statusCode;
+  }
+}
 
 function loadRoutingRules(filePath: string): RoutingRules {
   const raw = readFileSync(filePath, "utf-8");
@@ -98,12 +107,16 @@ async function readJsonBody(request: IncomingMessage): Promise<unknown> {
     return {};
   }
 
-  return JSON.parse(Buffer.concat(chunks).toString("utf-8"));
+  try {
+    return JSON.parse(Buffer.concat(chunks).toString("utf-8"));
+  } catch {
+    throw new HttpError(400, "Request body must be valid JSON.");
+  }
 }
 
 function parseDispatchRequest(input: unknown): DispatchRequest {
   if (typeof input !== "object" || input === null) {
-    throw new Error("Request body must be a JSON object.");
+    throw new HttpError(400, "Request body must be a JSON object.");
   }
 
   const request = input as Record<string, unknown>;
@@ -112,7 +125,7 @@ function parseDispatchRequest(input: unknown): DispatchRequest {
   const path = typeof request.path === "string" ? request.path.trim() : "";
 
   if (!prompt && !query && !path) {
-    throw new Error("One of `prompt`, `query`, or `path` is required.");
+    throw new HttpError(400, "One of `prompt`, `query`, or `path` is required.");
   }
 
   return {
@@ -166,35 +179,40 @@ function normalizeKnowledgeQuery(prompt: string): string {
 
 async function requestJson(url: string, method: string, payload?: unknown): Promise<{ status: number; data: unknown }> {
   const body = payload === undefined ? undefined : JSON.stringify(payload);
-  const response = await fetch(url, {
-    method,
-    headers: { "Content-Type": "application/json" },
-    body,
-  });
+  try {
+    const response = await fetch(url, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body,
+    });
 
-  const text = await response.text();
-  return {
-    status: response.status,
-    data: text ? JSON.parse(text) : {},
-  };
+    const text = await response.text();
+    return {
+      status: response.status,
+      data: text ? JSON.parse(text) : {},
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new HttpError(502, `Downstream request failed: ${message}`);
+  }
 }
 
 async function executeTaskAdapter(baseUrl: string, payload: Record<string, unknown>) {
   const created = await requestJson(`${baseUrl}/tasks`, "POST", payload);
   if (created.status !== 202) {
-    throw new Error(`Task creation failed: ${JSON.stringify(created.data)}`);
+    throw new HttpError(502, `Task creation failed: ${JSON.stringify(created.data)}`);
   }
 
   const createdData = created.data as { id?: string };
   if (!createdData.id) {
-    throw new Error("Task adapter returned no task id.");
+    throw new HttpError(502, "Task adapter returned no task id.");
   }
 
   const deadline = Date.now() + POLL_TIMEOUT_MS;
   while (Date.now() < deadline) {
     const polled = await requestJson(`${baseUrl}/tasks/${createdData.id}`, "GET");
     if (polled.status !== 200) {
-      throw new Error(`Task polling failed: ${JSON.stringify(polled.data)}`);
+      throw new HttpError(502, `Task polling failed: ${JSON.stringify(polled.data)}`);
     }
 
     const task = polled.data as { state?: string };
@@ -205,7 +223,7 @@ async function executeTaskAdapter(baseUrl: string, payload: Record<string, unkno
     await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
   }
 
-  throw new Error("Task timed out.");
+  throw new HttpError(504, "Task timed out.");
 }
 
 async function dispatch(request: DispatchRequest) {
@@ -219,23 +237,20 @@ async function dispatch(request: DispatchRequest) {
         repoPath: request.repoPath,
       });
       if (result.status !== 200) {
-        throw new Error(`Knowledge read failed: ${JSON.stringify(result.data)}`);
+        throw new HttpError(502, `Knowledge read failed: ${JSON.stringify(result.data)}`);
       }
       return { worker: route.worker, reason: route.reason, result: result.data };
     }
 
+    const normalizedQuery = normalizeKnowledgeQuery(request.prompt ?? "");
+    const resolvedQuery = (request.query ?? normalizedQuery) || request.prompt;
     const result = await requestJson(`${KNOWLEDGE_ADAPTER_URL}/search`, "POST", {
-      query:
-        request.query ??
-        (() => {
-          const normalized = normalizeKnowledgeQuery(request.prompt ?? "");
-          return normalized || request.prompt;
-        })(),
+      query: resolvedQuery,
       repoPath: request.repoPath,
       maxResults: request.maxResults,
     });
     if (result.status !== 200) {
-      throw new Error(`Knowledge search failed: ${JSON.stringify(result.data)}`);
+      throw new HttpError(502, `Knowledge search failed: ${JSON.stringify(result.data)}`);
     }
     return { worker: route.worker, reason: route.reason, result: result.data };
   }
@@ -274,8 +289,13 @@ const server = createServer(async (request, response) => {
       sendJson(response, 200, await dispatch(payload));
       return;
     } catch (error) {
+      if (error instanceof HttpError) {
+        sendJson(response, error.statusCode, { error: error.message });
+        return;
+      }
+
       const message = error instanceof Error ? error.message : String(error);
-      sendJson(response, 400, { error: message });
+      sendJson(response, 500, { error: message });
       return;
     }
   }
