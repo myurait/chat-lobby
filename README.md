@@ -62,6 +62,24 @@ python3 tools/sync_openwebui_claude_pipe.py \
   --webui-url http://localhost:3000 \
   --email admin@example.com \
   --password chatlobby-admin-password
+
+# Register the Open WebUI Codex task pipe
+python3 tools/sync_openwebui_codex_pipe.py \
+  --webui-url http://localhost:3000 \
+  --email admin@example.com \
+  --password chatlobby-admin-password
+
+# Register the Open WebUI knowledge query pipe
+python3 tools/sync_openwebui_knowledge_pipe.py \
+  --webui-url http://localhost:3000 \
+  --email admin@example.com \
+  --password chatlobby-admin-password
+
+# Register the Open WebUI dispatch pipe
+python3 tools/sync_openwebui_dispatch_pipe.py \
+  --webui-url http://localhost:3000 \
+  --email admin@example.com \
+  --password chatlobby-admin-password
 ```
 
 Replace the URL above if you changed `OPEN_WEBUI_PORT`.
@@ -118,6 +136,78 @@ After syncing the pipe, select the `ChatLobby Claude Task` model in Open WebUI a
 
 The pipe creates a Claude task through the local adapter and returns the task result to chat.
 
+## Codex Adapter
+
+The Codex adapter mirrors the Claude adapter pattern and wraps `codex exec --json`.
+
+```bash
+# Start the adapter for Open WebUI integration
+CODEX_ADAPTER_HOST=0.0.0.0 node services/codex-adapter/src/server.ts
+
+# Create a Codex task
+curl -X POST http://127.0.0.1:8788/tasks \
+  -H 'Content-Type: application/json' \
+  -d '{"prompt":"Reply with exactly ok.","workingDirectory":"'"$(pwd)"'"}'
+
+# Poll task status
+curl http://127.0.0.1:8788/tasks/<task-id>
+```
+
+After syncing the pipe, select the `ChatLobby Codex Task` model in Open WebUI and send:
+
+```json
+{
+  "prompt": "Reply with exactly ok.",
+  "workingDirectory": "/Users/you/path/to/repo"
+}
+```
+
+## Knowledge Adapter
+
+The knowledge adapter exposes canonical repository search and read endpoints.
+
+```bash
+# Start the adapter for Open WebUI integration
+KNOWLEDGE_ADAPTER_HOST=0.0.0.0 node services/knowledge-adapter/src/server.ts
+
+# Search canonical knowledge
+curl -X POST http://127.0.0.1:8789/search \
+  -H 'Content-Type: application/json' \
+  -d '{"query":"ChatLobby"}'
+```
+
+After syncing the pipe, select the `ChatLobby Knowledge Query` model in Open WebUI and send:
+
+```json
+{
+  "query": "ChatLobby"
+}
+```
+
+## Dispatcher
+
+The dispatcher applies rule-based routing from `services/dispatcher/rules.yaml` and chooses Claude, Codex,
+or knowledge automatically. The rule file uses JSON-compatible YAML so it can be loaded without adding a
+runtime YAML parser dependency.
+
+```bash
+# Start the dispatcher for Open WebUI integration
+DISPATCHER_HOST=0.0.0.0 node services/dispatcher/src/server.ts
+
+# Test automatic routing directly
+curl -X POST http://127.0.0.1:8790/dispatch \
+  -H 'Content-Type: application/json' \
+  -d '{"prompt":"Implement a prototype and reply with exactly ok.","workingDirectory":"'"$(pwd)"'"}'
+```
+
+After syncing the pipe, select the `ChatLobby Dispatch Task` model in Open WebUI and send plain text like:
+
+```text
+Implement the feature and reply with exactly ok.
+```
+
+Send JSON only when you need override fields such as `workerHint`, `repoPath`, or `workingDirectory`.
+
 ## Manual Verification
 
 1. Sign in with the admin account from `.env`.
@@ -127,6 +217,9 @@ The pipe creates a Claude task through the local adapter and returns the task re
 5. For phone testing, open `http://<your-lan-ip>:<OPEN_WEBUI_PORT>` from a device on the same network.
 6. Sync `chatlobby_publish`, select the `ChatLobby Publish` model, and confirm a chat request writes a file under `/workspace/templates/chatlobby-canonical/`.
 7. Start the Claude adapter with `CLAUDE_ADAPTER_HOST=0.0.0.0`, sync `chatlobby_claude_task`, and confirm the `ChatLobby Claude Task` model returns a completed task result in chat.
+8. Start the Codex adapter with `CODEX_ADAPTER_HOST=0.0.0.0`, sync `chatlobby_codex_task`, and confirm the `ChatLobby Codex Task` model returns a completed task result in chat.
+9. Start the knowledge adapter with `KNOWLEDGE_ADAPTER_HOST=0.0.0.0`, sync `chatlobby_knowledge_query`, and confirm the `ChatLobby Knowledge Query` model returns search results from the canonical repo.
+10. Start the dispatcher with `DISPATCHER_HOST=0.0.0.0`, sync `chatlobby_dispatch_task`, and confirm plain-text requests such as `Implement ...`, `この不具合を直して`, and `README.ja.md を検索して` are routed to Codex, Claude, and knowledge respectively.
 
 ## Architecture
 

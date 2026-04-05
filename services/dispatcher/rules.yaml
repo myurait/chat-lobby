@@ -1,0 +1,83 @@
+{
+  "workers": {
+    "knowledge": {
+      "explicitFields": ["query", "path"],
+      "keywords": [
+        "search",
+        "find",
+        "where",
+        "read",
+        "document",
+        "docs",
+        "spec",
+        "adr",
+        "worklog",
+        "knowledge",
+        "検索",
+        "探して",
+        "見つけて",
+        "読んで",
+        "文書",
+        "ドキュメント",
+        "仕様",
+        "要件",
+        "ADR",
+        "作業ログ",
+        "ログ"
+      ]
+    },
+    "claude": {
+      "keywords": [
+        "terminal",
+        "shell",
+        "local",
+        "inspect",
+        "debug",
+        "reproduce",
+        "environment",
+        "docker",
+        "fix",
+        "bug",
+        "investigate",
+        "調査",
+        "確認",
+        "デバッグ",
+        "再現",
+        "ローカル",
+        "端末",
+        "シェル",
+        "環境",
+        "docker",
+        "不具合",
+        "バグ",
+        "直して",
+        "修正",
+        "原因"
+      ]
+    },
+    "codex": {
+      "keywords": [
+        "implement",
+        "write",
+        "create",
+        "build",
+        "refactor",
+        "add",
+        "feature",
+        "code",
+        "prototype",
+        "実装",
+        "作って",
+        "作成",
+        "追加",
+        "構築",
+        "リファクタ",
+        "機能",
+        "コード",
+        "開発",
+        "プロトタイプ"
+      ]
+    }
+  },
+  "defaultWorker": "codex"
+}

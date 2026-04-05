@@ -3,6 +3,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "claude-adapter": "node services/claude-adapter/src/server.ts"
+    "claude-adapter": "node services/claude-adapter/src/server.ts",
+    "codex-adapter": "node services/codex-adapter/src/server.ts",
+    "knowledge-adapter": "node services/knowledge-adapter/src/server.ts",
+    "dispatcher": "node services/dispatcher/src/server.ts"
   }
 }
