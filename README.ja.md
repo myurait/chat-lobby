@@ -23,6 +23,8 @@ docker compose exec ollama ollama pull qwen3:8b
 
 `http://localhost:3000` を開き、`.env` に設定した管理者アカウントでログインする。
 初回起動時に管理者ユーザーを自動作成し、公開サインアップは無効のままにする。
+もしローカルで `3000` 番ポートが既に使われている場合は、起動前に `.env` の
+`OPEN_WEBUI_PORT` と `WEBUI_URL` を `3001` などへ変更する。
 
 Open Terminal は Docker 内ネットワークで事前接続するため、端末 API をホストへ直接公開せずに
 Open WebUI からターミナルと File Browser を利用できる。
@@ -45,6 +47,14 @@ docker compose config
 - `workspace/templates/chatlobby-canonical/` に、共有正本 Git リポジトリの初期ディレクトリ構成を置く。
 - `workspace/repos/` は Open Terminal から clone した実運用リポジトリや一時作業置き場として使う。
 - 専用 workspace mount により、端末が参照するホスト側作業領域を意図した範囲に限定する。
+
+## 手動確認
+
+1. `.env` の管理者アカウントでログインする。
+2. 公開サインアップが拒否されることを確認する。
+3. Open WebUI から Open Terminal を開き、`/workspace` が見えることを確認する。
+4. terminal の file tools または File Browser で `/workspace` を列挙し、`repos/` と `templates/` が見えることを確認する。
+5. スマホ確認では、同一ネットワーク上の端末から `http://<LAN内IP>:<OPEN_WEBUI_PORT>` を開く。
 
 ## アーキテクチャ
 

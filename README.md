@@ -23,6 +23,8 @@ docker compose exec ollama ollama pull qwen3:8b
 
 Open `http://localhost:3000` and sign in with the admin account defined in `.env`.
 The first boot creates the admin user automatically and keeps public sign-up disabled.
+If port `3000` is already in use on your machine, set `OPEN_WEBUI_PORT` and `WEBUI_URL` in `.env`
+before starting the stack, for example `3001` and `http://localhost:3001`.
 
 Open Terminal is pre-configured through the internal Docker network, so the terminal and file browser are
 available from Open WebUI without exposing the terminal API to the host.
@@ -45,6 +47,14 @@ docker compose config
 - `workspace/templates/chatlobby-canonical/` provides the initial directory layout for the shared canonical Git repository.
 - `workspace/repos/` is reserved for runtime clones and scratch repositories opened from Open Terminal.
 - The dedicated workspace mount narrows terminal access to the intended project work area instead of the full host filesystem.
+
+## Manual Verification
+
+1. Sign in with the admin account from `.env`.
+2. Confirm that a new public sign-up is rejected.
+3. Open Open Terminal from Open WebUI and confirm `/workspace` is visible.
+4. Use the terminal file tools or File Browser to list `/workspace` and verify `repos/` and `templates/` appear.
+5. For phone testing, open `http://<your-lan-ip>:<OPEN_WEBUI_PORT>` from a device on the same network.
 
 ## Architecture
 
