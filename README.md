@@ -8,6 +8,13 @@ behind a single conversational interface powered by Open WebUI.
 ChatLobby enables you to manage the full development lifecycle — from investigation and spec authoring
 to implementation requests, status monitoring, and spec revisions — all from a single chat, including mobile.
 
+## Prerequisites
+
+- Docker Compose for the Open WebUI stack
+- Node.js 22 or newer for running the host-side TypeScript services directly
+- Python 3 for sync helpers and the current automated test suite
+- A shared bearer token in `.env` for Open WebUI to reach host-side adapters and dispatcher
+
 ## Setup
 
 ```bash
@@ -30,6 +37,7 @@ Open Terminal is pre-configured through the internal Docker network, so the term
 available from Open WebUI without exposing the terminal API to the host.
 The host-side [`workspace/`](/Users/fox4foofighter/dev/chat-lobby/workspace/README.md) directory is mounted into the
 terminal container at `/workspace` as the dedicated working area.
+`CHATLOBBY_INTERNAL_API_TOKEN` from `.env` is also passed into the Open WebUI container.
 
 ## Development
 
@@ -54,8 +62,13 @@ python3 tools/sync_openwebui_publish_pipe.py \
   --email admin@example.com \
   --password chatlobby-admin-password
 
+# Load .env into the current shell before starting host-side services
+set -a
+source .env
+set +a
+
 # Start the local Claude adapter
-node services/claude-adapter/src/server.ts
+CLAUDE_ADAPTER_HOST=0.0.0.0 node services/claude-adapter/src/server.ts
 
 # Register the Open WebUI Claude task pipe
 python3 tools/sync_openwebui_claude_pipe.py \
@@ -83,6 +96,7 @@ python3 tools/sync_openwebui_dispatch_pipe.py \
 ```
 
 Replace the URL above if you changed `OPEN_WEBUI_PORT`.
+The `typecheck` script expects `tsc` to be available in your shell.
 
 ## Shared Repo Template
 
@@ -118,6 +132,7 @@ CLAUDE_ADAPTER_HOST=0.0.0.0 node services/claude-adapter/src/server.ts
 
 # Create a Claude task
 curl -X POST http://127.0.0.1:8787/tasks \
+  -H "Authorization: Bearer ${CHATLOBBY_INTERNAL_API_TOKEN}" \
   -H 'Content-Type: application/json' \
   -d '{"prompt":"Reply with exactly ok.","workingDirectory":"'"$(pwd)"'"}'
 
@@ -151,6 +166,7 @@ node services/codex-adapter/src/server.ts
 
 # Create a Codex task
 curl -X POST http://127.0.0.1:8788/tasks \
+  -H "Authorization: Bearer ${CHATLOBBY_INTERNAL_API_TOKEN}" \
   -H 'Content-Type: application/json' \
   -d '{"prompt":"Reply with exactly ok.","workingDirectory":"'"$(pwd)"'"}'
 
@@ -180,6 +196,7 @@ KNOWLEDGE_ADAPTER_HOST=0.0.0.0 node services/knowledge-adapter/src/server.ts
 
 # Search canonical knowledge
 curl -X POST http://127.0.0.1:8789/search \
+  -H "Authorization: Bearer ${CHATLOBBY_INTERNAL_API_TOKEN}" \
   -H 'Content-Type: application/json' \
   -d '{"query":"ChatLobby"}'
 ```
@@ -203,6 +220,7 @@ DISPATCHER_HOST=0.0.0.0 node services/dispatcher/src/server.ts
 
 # Test automatic routing directly
 curl -X POST http://127.0.0.1:8790/dispatch \
+  -H "Authorization: Bearer ${CHATLOBBY_INTERNAL_API_TOKEN}" \
   -H 'Content-Type: application/json' \
   -d '{"prompt":"Implement a prototype and reply with exactly ok.","workingDirectory":"'"$(pwd)"'"}'
 ```
@@ -214,6 +232,7 @@ Implement the feature and reply with exactly ok.
 ```
 
 Send JSON only when you need override fields such as `workerHint`, `repoPath`, or `workingDirectory`.
+If a synced pipe does not pick up the token automatically, set `api_bearer_token` in that function's valves and sync it again.
 
 ## Manual Verification
 

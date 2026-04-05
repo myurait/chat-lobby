@@ -3,6 +3,7 @@ import { promisify } from "node:util";
 import { readFile } from "node:fs/promises";
 import { isAbsolute, relative, resolve } from "node:path";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
+import { HttpError, notFound, readJsonBody, requireBearerToken, requireTokenForNonLoopbackBind, sendJson } from "../../shared/http.ts";
 
 const execFileAsync = promisify(execFile);
 
@@ -23,29 +24,9 @@ const HOST = process.env.KNOWLEDGE_ADAPTER_HOST ?? "127.0.0.1";
 const DEFAULT_REPO_PATH = process.env.KNOWLEDGE_REPO_PATH ?? resolve(process.cwd(), "workspace/templates/chatlobby-canonical");
 const MAX_RESULTS = Number(process.env.KNOWLEDGE_MAX_RESULTS ?? "10");
 const MAX_BYTES = Number(process.env.KNOWLEDGE_MAX_BYTES ?? "12000");
+const API_TOKEN = process.env.KNOWLEDGE_ADAPTER_API_TOKEN ?? process.env.CHATLOBBY_INTERNAL_API_TOKEN ?? "";
 
-function sendJson(response: ServerResponse, statusCode: number, payload: unknown) {
-  response.statusCode = statusCode;
-  response.setHeader("Content-Type", "application/json; charset=utf-8");
-  response.end(JSON.stringify(payload));
-}
-
-function notFound(response: ServerResponse) {
-  sendJson(response, 404, { error: "Not found" });
-}
-
-async function readJsonBody(request: IncomingMessage): Promise<unknown> {
-  const chunks: Buffer[] = [];
-  for await (const chunk of request) {
-    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
-  }
-
-  if (chunks.length === 0) {
-    return {};
-  }
-
-  return JSON.parse(Buffer.concat(chunks).toString("utf-8"));
-}
+requireTokenForNonLoopbackBind("knowledge-adapter", HOST, API_TOKEN);
 
 function ensureRepoRoot(candidate?: string): string {
   return resolve(candidate && candidate.trim() !== "" ? candidate : DEFAULT_REPO_PATH);
@@ -235,6 +216,7 @@ const server = createServer(async (request, response) => {
 
   if (request.method === "POST" && url.pathname === "/search") {
     try {
+      requireBearerToken(request, API_TOKEN);
       const payload = parseSearchRequest(await readJsonBody(request));
       sendJson(response, 200, await handleSearch(payload));
       return;
@@ -247,6 +229,7 @@ const server = createServer(async (request, response) => {
 
   if (request.method === "POST" && url.pathname === "/read") {
     try {
+      requireBearerToken(request, API_TOKEN);
       const payload = parseReadRequest(await readJsonBody(request));
       sendJson(response, 200, await handleRead(payload));
       return;

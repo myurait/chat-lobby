@@ -53,19 +53,25 @@ class CodexAdapterTests(unittest.TestCase):
 
         self.fail("codex adapter did not become healthy in time")
 
-    def _create_task_and_read(self, port: int):
+    def _create_task_and_read(self, port: int, bearer_token: str | None = None):
+        headers = {"Content-Type": "application/json"}
+        if bearer_token:
+            headers["Authorization"] = f"Bearer {bearer_token}"
         request = urllib.request.Request(
             f"http://127.0.0.1:{port}/tasks",
             data=json.dumps({"prompt": "Reply with exactly ok."}).encode("utf-8"),
             method="POST",
-            headers={"Content-Type": "application/json"},
+            headers=headers,
         )
         with urllib.request.urlopen(request) as response:
             created = json.loads(response.read().decode("utf-8"))
 
         deadline = time.time() + 10
         while time.time() < deadline:
-            with urllib.request.urlopen(f"http://127.0.0.1:{port}/tasks/{created['id']}") as response:
+            task_request = urllib.request.Request(f"http://127.0.0.1:{port}/tasks/{created['id']}")
+            if bearer_token:
+                task_request.add_header("Authorization", f"Bearer {bearer_token}")
+            with urllib.request.urlopen(task_request) as response:
                 task = json.loads(response.read().decode("utf-8"))
             if task["state"] != "running":
                 return task
@@ -98,6 +104,34 @@ class CodexAdapterTests(unittest.TestCase):
             task = self._create_task_and_read(port)
             self.assertIn("--dangerously-bypass-approvals-and-sandbox", task["command"])
             self.assertNotIn("--sandbox", task["command"])
+        finally:
+            process.terminate()
+            try:
+                process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                process.wait(timeout=5)
+            if process.stdout is not None:
+                process.stdout.close()
+            if process.stderr is not None:
+                process.stderr.close()
+
+    def test_bearer_token_is_required_when_configured(self):
+        port, process = self._start_adapter({"CHATLOBBY_INTERNAL_API_TOKEN": "secret-token"})
+        try:
+            unauthorized_request = urllib.request.Request(
+                f"http://127.0.0.1:{port}/tasks",
+                data=json.dumps({"prompt": "Reply with exactly ok."}).encode("utf-8"),
+                method="POST",
+                headers={"Content-Type": "application/json"},
+            )
+            with self.assertRaises(urllib.error.HTTPError) as context:
+                urllib.request.urlopen(unauthorized_request)
+            self.assertEqual(context.exception.code, 401)
+
+            task = self._create_task_and_read(port, bearer_token="secret-token")
+            self.assertNotEqual(task["state"], "running")
+            self.assertEqual(task["command"][0], "exec")
         finally:
             process.terminate()
             try:

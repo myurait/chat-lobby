@@ -6,6 +6,8 @@
     "claude-adapter": "node services/claude-adapter/src/server.ts",
     "codex-adapter": "node services/codex-adapter/src/server.ts",
     "knowledge-adapter": "node services/knowledge-adapter/src/server.ts",
-    "dispatcher": "node services/dispatcher/src/server.ts"
+    "dispatcher": "node services/dispatcher/src/server.ts",
+    "test": "python3 -m unittest tests.test_codex_adapter tests.test_dispatcher tests.test_knowledge_adapter tests.test_publish_to_repo",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
   }
 }

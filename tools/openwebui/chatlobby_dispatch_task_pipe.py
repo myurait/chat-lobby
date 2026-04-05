@@ -7,6 +7,7 @@ version: 0.1
 from __future__ import annotations
 
 import json
+import os
 import urllib.error
 import urllib.request
 from typing import Optional
@@ -41,6 +42,10 @@ class Pipe:
         dispatcher_base_url: str = Field(
             default="http://host.docker.internal:8790",
             description="Dispatcher base URL reachable from the Open WebUI container.",
+        )
+        api_bearer_token: str = Field(
+            default=os.environ.get("CHATLOBBY_INTERNAL_API_TOKEN", ""),
+            description="Bearer token used for dispatcher requests.",
         )
 
     def __init__(self) -> None:
@@ -84,6 +89,8 @@ class Pipe:
         body = None if payload is None else json.dumps(payload).encode("utf-8")
         request = urllib.request.Request(f"{self.valves.dispatcher_base_url}{path}", data=body, method=method)
         request.add_header("Content-Type", "application/json")
+        if self.valves.api_bearer_token:
+            request.add_header("Authorization", f"Bearer {self.valves.api_bearer_token}")
 
         try:
             with urllib.request.urlopen(request) as response:

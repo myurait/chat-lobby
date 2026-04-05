@@ -181,13 +181,16 @@ class DispatcherTests(unittest.TestCase):
 
         self.fail(f"dispatcher did not start: {last_error}")
 
-    def _post_json(self, payload: dict) -> tuple[int, dict]:
+    def _post_json(self, payload: dict, bearer_token: str | None = None) -> tuple[int, dict]:
         body = json.dumps(payload).encode("utf-8")
+        headers = {"Content-Type": "application/json"}
+        if bearer_token:
+            headers["Authorization"] = f"Bearer {bearer_token}"
         request = urllib.request.Request(
             f"http://127.0.0.1:{self.port}/dispatch",
             data=body,
             method="POST",
-            headers={"Content-Type": "application/json"},
+            headers=headers,
         )
 
         try:
@@ -239,6 +242,33 @@ class DispatcherTests(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertEqual(data["worker"], "knowledge")
         self.assertEqual(self.knowledge_stub.requests[0][1]["query"], "ChatLobby")
+
+    def test_dispatch_requires_bearer_token_when_configured(self) -> None:
+        self._cleanup_process()
+        env = os.environ.copy()
+        env["DISPATCHER_HOST"] = "127.0.0.1"
+        env["DISPATCHER_PORT"] = str(self.port)
+        env["CLAUDE_ADAPTER_URL"] = self.claude_stub.base_url
+        env["CODEX_ADAPTER_URL"] = self.codex_stub.base_url
+        env["KNOWLEDGE_ADAPTER_URL"] = self.knowledge_stub.base_url
+        env["CHATLOBBY_INTERNAL_API_TOKEN"] = "secret-token"
+        self.process = subprocess.Popen(
+            ["node", str(SERVER_PATH)],
+            cwd=ROOT_DIR,
+            env=env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+        self._wait_for_server()
+
+        status, data = self._post_json({"prompt": "実装して"})
+        self.assertEqual(status, 401)
+        self.assertIn("token", data["error"])
+
+        status, data = self._post_json({"prompt": "実装して"}, bearer_token="secret-token")
+        self.assertEqual(status, 200)
+        self.assertEqual(data["worker"], "codex")
 
 
 if __name__ == "__main__":

@@ -1,6 +1,7 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { HttpError, notFound, readJsonBody, requireBearerToken, requireTokenForNonLoopbackBind, sendJson } from "../../shared/http.ts";
 
 type WorkerName = "claude" | "codex" | "knowledge";
 
@@ -32,15 +33,10 @@ const KNOWLEDGE_ADAPTER_URL = process.env.KNOWLEDGE_ADAPTER_URL ?? "http://127.0
 const POLL_INTERVAL_MS = Number(process.env.DISPATCHER_POLL_INTERVAL_MS ?? "1000");
 const POLL_TIMEOUT_MS = Number(process.env.DISPATCHER_POLL_TIMEOUT_MS ?? "180000");
 const RULES_FILE = process.env.DISPATCHER_RULES_FILE ?? resolve(process.cwd(), "services/dispatcher/rules.json");
+const API_TOKEN = process.env.DISPATCHER_API_TOKEN ?? process.env.CHATLOBBY_INTERNAL_API_TOKEN ?? "";
+const DOWNSTREAM_API_TOKEN = process.env.DISPATCHER_DOWNSTREAM_API_TOKEN ?? process.env.CHATLOBBY_INTERNAL_API_TOKEN ?? "";
 
-class HttpError extends Error {
-  readonly statusCode: number;
-
-  constructor(statusCode: number, message: string) {
-    super(message);
-    this.statusCode = statusCode;
-  }
-}
+requireTokenForNonLoopbackBind("dispatcher", HOST, API_TOKEN);
 
 function loadRoutingRules(filePath: string): RoutingRules {
   const raw = readFileSync(filePath, "utf-8");
@@ -86,33 +82,6 @@ function loadRoutingRules(filePath: string): RoutingRules {
 }
 
 const routingRules = loadRoutingRules(RULES_FILE);
-
-function sendJson(response: ServerResponse, statusCode: number, payload: unknown) {
-  response.statusCode = statusCode;
-  response.setHeader("Content-Type", "application/json; charset=utf-8");
-  response.end(JSON.stringify(payload));
-}
-
-function notFound(response: ServerResponse) {
-  sendJson(response, 404, { error: "Not found" });
-}
-
-async function readJsonBody(request: IncomingMessage): Promise<unknown> {
-  const chunks: Buffer[] = [];
-  for await (const chunk of request) {
-    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
-  }
-
-  if (chunks.length === 0) {
-    return {};
-  }
-
-  try {
-    return JSON.parse(Buffer.concat(chunks).toString("utf-8"));
-  } catch {
-    throw new HttpError(400, "Request body must be valid JSON.");
-  }
-}
 
 function parseDispatchRequest(input: unknown): DispatchRequest {
   if (typeof input !== "object" || input === null) {
@@ -180,9 +149,13 @@ function normalizeKnowledgeQuery(prompt: string): string {
 async function requestJson(url: string, method: string, payload?: unknown): Promise<{ status: number; data: unknown }> {
   const body = payload === undefined ? undefined : JSON.stringify(payload);
   try {
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (DOWNSTREAM_API_TOKEN) {
+      headers.Authorization = `Bearer ${DOWNSTREAM_API_TOKEN}`;
+    }
     const response = await fetch(url, {
       method,
-      headers: { "Content-Type": "application/json" },
+      headers,
       body,
     });
 
@@ -285,6 +258,7 @@ const server = createServer(async (request, response) => {
 
   if (request.method === "POST" && url.pathname === "/dispatch") {
     try {
+      requireBearerToken(request, API_TOKEN);
       const payload = parseDispatchRequest(await readJsonBody(request));
       sendJson(response, 200, await dispatch(payload));
       return;

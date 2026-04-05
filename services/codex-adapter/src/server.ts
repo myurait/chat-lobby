@@ -1,6 +1,8 @@
 import { spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
+import { HttpError, notFound, readJsonBody, requireBearerToken, requireTokenForNonLoopbackBind, sendJson } from "../../shared/http.ts";
+import { trimTasks } from "../../shared/tasks.ts";
 
 type TaskState = "running" | "succeeded" | "failed";
 
@@ -36,31 +38,11 @@ const DEFAULT_SANDBOX_MODE =
 const DEFAULT_SKIP_GIT_REPO_CHECK = process.env.CODEX_SKIP_GIT_REPO_CHECK !== "false";
 const DEFAULT_BYPASS_APPROVALS = process.env.CODEX_BYPASS_APPROVALS_AND_SANDBOX === "true";
 const MAX_TASKS = Number(process.env.CODEX_ADAPTER_MAX_TASKS ?? "50");
+const API_TOKEN = process.env.CODEX_ADAPTER_API_TOKEN ?? process.env.CHATLOBBY_INTERNAL_API_TOKEN ?? "";
+
+requireTokenForNonLoopbackBind("codex-adapter", HOST, API_TOKEN);
 
 const tasks = new Map<string, CodexTaskRecord>();
-
-function sendJson(response: ServerResponse, statusCode: number, payload: unknown) {
-  response.statusCode = statusCode;
-  response.setHeader("Content-Type", "application/json; charset=utf-8");
-  response.end(JSON.stringify(payload));
-}
-
-function notFound(response: ServerResponse) {
-  sendJson(response, 404, { error: "Not found" });
-}
-
-async function readJsonBody(request: IncomingMessage): Promise<unknown> {
-  const chunks: Buffer[] = [];
-  for await (const chunk of request) {
-    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
-  }
-
-  if (chunks.length === 0) {
-    return {};
-  }
-
-  return JSON.parse(Buffer.concat(chunks).toString("utf-8"));
-}
 
 function parseTaskRequest(input: unknown): CodexTaskRequest {
   if (typeof input !== "object" || input === null) {
@@ -114,26 +96,6 @@ function buildCodexCommand(task: CodexTaskRequest): string[] {
 
   command.push(task.prompt);
   return command;
-}
-
-function trimTasks() {
-  if (tasks.size < MAX_TASKS) {
-    return;
-  }
-
-  for (const [taskId, task] of tasks) {
-    if (task.state !== "running") {
-      tasks.delete(taskId);
-      if (tasks.size < MAX_TASKS) {
-        return;
-      }
-    }
-  }
-
-  const oldestTaskId = tasks.keys().next().value;
-  if (oldestTaskId) {
-    tasks.delete(oldestTaskId);
-  }
 }
 
 function parseCodexJsonl(stdout: string): unknown {
@@ -211,6 +173,16 @@ const server = createServer(async (request, response) => {
     return;
   }
 
+  try {
+    requireBearerToken(request, API_TOKEN);
+  } catch (error) {
+    if (error instanceof HttpError) {
+      sendJson(response, error.statusCode, { error: error.message });
+      return;
+    }
+    throw error;
+  }
+
   if (request.method === "GET" && url.pathname === "/tasks") {
     sendJson(response, 200, {
       items: Array.from(tasks.values()).map((task) => ({
@@ -249,7 +221,7 @@ const server = createServer(async (request, response) => {
         createdAt: new Date().toISOString(),
       };
 
-      trimTasks();
+      trimTasks(tasks, MAX_TASKS);
       tasks.set(id, task);
       runTask(task, payload);
 

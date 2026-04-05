@@ -7,6 +7,7 @@ version: 0.1
 from __future__ import annotations
 
 import json
+import os
 import time
 import urllib.error
 import urllib.request
@@ -40,6 +41,10 @@ class Pipe:
         adapter_base_url: str = Field(
             default="http://host.docker.internal:8788",
             description="Codex adapter base URL reachable from the Open WebUI container.",
+        )
+        api_bearer_token: str = Field(
+            default=os.environ.get("CHATLOBBY_INTERNAL_API_TOKEN", ""),
+            description="Bearer token used for Codex adapter requests.",
         )
         poll_interval_seconds: float = Field(default=1.0, description="Polling interval while waiting for task completion.")
         poll_timeout_seconds: int = Field(default=180, description="Maximum seconds to wait for a Codex task.")
@@ -77,6 +82,8 @@ class Pipe:
         body = None if payload is None else json.dumps(payload).encode("utf-8")
         request = urllib.request.Request(f"{self.valves.adapter_base_url}{path}", data=body, method=method)
         request.add_header("Content-Type", "application/json")
+        if self.valves.api_bearer_token:
+            request.add_header("Authorization", f"Bearer {self.valves.api_bearer_token}")
 
         try:
             with urllib.request.urlopen(request) as response:
