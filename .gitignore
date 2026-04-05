@@ -1,0 +1,22 @@
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+
+# Local AI / tooling state
+.claude/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Dependency / build outputs
+node_modules/
+dist/
+build/
+coverage/
+.cache/
+
+# Private development docs repo cloned into the main project root
+/development-docs/
