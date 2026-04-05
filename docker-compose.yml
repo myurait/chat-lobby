@@ -31,6 +31,9 @@ services:
       - "${OPEN_WEBUI_PORT:-3000}:8080"
     volumes:
       - open-webui:/app/backend/data
+      - ./workspace:/workspace
+      - ./tools:/workspace/chatlobby/tools:ro
+      - ./docs:/workspace/chatlobby/docs:ro
     environment:
       OLLAMA_BASE_URL: http://ollama:11434
       WEBUI_URL: ${WEBUI_URL:-http://localhost:3000}

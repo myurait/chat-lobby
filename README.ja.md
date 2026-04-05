@@ -40,13 +40,46 @@ WEBUI_ADMIN_EMAIL=admin@example.com \
 WEBUI_ADMIN_PASSWORD=test-password \
 OPEN_TERMINAL_API_KEY=test-terminal-key \
 docker compose config
+
+# 共有正本レイアウトへ spec を publish
+python3 tools/publish_to_repo.py \
+  --repo workspace/templates/chatlobby-canonical \
+  --kind spec \
+  --title "Example feature spec" \
+  --body "Initial summary"
+
+# Open WebUI に publish pipe を登録
+python3 tools/sync_openwebui_publish_pipe.py \
+  --webui-url http://localhost:3000 \
+  --email admin@example.com \
+  --password chatlobby-admin-password
 ```
+
+`OPEN_WEBUI_PORT` を変更した場合は、この URL も合わせて置き換える。
 
 ## 共有 Git リポジトリテンプレート
 
 - `workspace/templates/chatlobby-canonical/` に、共有正本 Git リポジトリの初期ディレクトリ構成を置く。
 - `workspace/repos/` は Open Terminal から clone した実運用リポジトリや一時作業置き場として使う。
 - 専用 workspace mount により、端末が参照するホスト側作業領域を意図した範囲に限定する。
+- `tools/publish_to_repo.py` は、共有正本レイアウトへテンプレート付き Markdown を保存する CLI である。
+- `tools/openwebui/chatlobby_publish_pipe.py` は、会話から publish を呼び出す Open WebUI 用 pipe である。
+- `tools/sync_openwebui_publish_pipe.py` は、その pipe を Open WebUI 管理 API 経由で登録・更新するための補助 CLI である。
+
+## 会話から publish
+
+pipe を同期した後、Open WebUI で `ChatLobby Publish` モデルを選び、次のような JSON を送る。
+
+```json
+{
+  "kind": "spec",
+  "title": "Example feature spec",
+  "body": "Summarize the feature here.",
+  "slug": "example-feature-spec"
+}
+```
+
+pipe は canonical repo へ文書を書き込み、保存先パスを返す。
 
 ## 手動確認
 
@@ -55,6 +88,7 @@ docker compose config
 3. Open WebUI から Open Terminal を開き、`/workspace` が見えることを確認する。
 4. terminal の file tools または File Browser で `/workspace` を列挙し、`repos/` と `templates/` が見えることを確認する。
 5. スマホ確認では、同一ネットワーク上の端末から `http://<LAN内IP>:<OPEN_WEBUI_PORT>` を開く。
+6. `chatlobby_publish` を同期し、`ChatLobby Publish` モデルで送った会話が `/workspace/templates/chatlobby-canonical/` に保存されることを確認する。
 
 ## アーキテクチャ
 

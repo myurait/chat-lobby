@@ -40,13 +40,46 @@ WEBUI_ADMIN_EMAIL=admin@example.com \
 WEBUI_ADMIN_PASSWORD=test-password \
 OPEN_TERMINAL_API_KEY=test-terminal-key \
 docker compose config
+
+# Publish a spec into the canonical repo layout
+python3 tools/publish_to_repo.py \
+  --repo workspace/templates/chatlobby-canonical \
+  --kind spec \
+  --title "Example feature spec" \
+  --body "Initial summary"
+
+# Register the Open WebUI publish pipe
+python3 tools/sync_openwebui_publish_pipe.py \
+  --webui-url http://localhost:3000 \
+  --email admin@example.com \
+  --password chatlobby-admin-password
 ```
+
+Replace the URL above if you changed `OPEN_WEBUI_PORT`.
 
 ## Shared Repo Template
 
 - `workspace/templates/chatlobby-canonical/` provides the initial directory layout for the shared canonical Git repository.
 - `workspace/repos/` is reserved for runtime clones and scratch repositories opened from Open Terminal.
 - The dedicated workspace mount narrows terminal access to the intended project work area instead of the full host filesystem.
+- `tools/publish_to_repo.py` writes templated Markdown into the canonical repository layout.
+- `tools/openwebui/chatlobby_publish_pipe.py` is the Open WebUI pipe that exposes publish-from-chat.
+- `tools/sync_openwebui_publish_pipe.py` registers or updates that pipe through the Open WebUI admin API.
+
+## Chat Publish
+
+After syncing the pipe, select the `ChatLobby Publish` model in Open WebUI and send a JSON message like this:
+
+```json
+{
+  "kind": "spec",
+  "title": "Example feature spec",
+  "body": "Summarize the feature here.",
+  "slug": "example-feature-spec"
+}
+```
+
+The pipe writes the document into the canonical repository and replies with the saved path.
 
 ## Manual Verification
 
@@ -55,6 +88,7 @@ docker compose config
 3. Open Open Terminal from Open WebUI and confirm `/workspace` is visible.
 4. Use the terminal file tools or File Browser to list `/workspace` and verify `repos/` and `templates/` appear.
 5. For phone testing, open `http://<your-lan-ip>:<OPEN_WEBUI_PORT>` from a device on the same network.
+6. Sync `chatlobby_publish`, select the `ChatLobby Publish` model, and confirm a chat request writes a file under `/workspace/templates/chatlobby-canonical/`.
 
 ## Architecture
 

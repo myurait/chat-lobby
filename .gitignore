@@ -17,6 +17,7 @@ dist/
 build/
 coverage/
 .cache/
+__pycache__/
 
 # Private development docs repo cloned into the main project root
 /development-docs/
