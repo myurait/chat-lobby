@@ -1,0 +1,8 @@
+{
+  "name": "chat-lobby",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "claude-adapter": "node services/claude-adapter/src/server.ts"
+  }
+}

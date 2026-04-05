@@ -53,6 +53,9 @@ python3 tools/sync_openwebui_publish_pipe.py \
   --webui-url http://localhost:3000 \
   --email admin@example.com \
   --password chatlobby-admin-password
+
+# Start the local Claude adapter
+node services/claude-adapter/src/server.ts
 ```
 
 Replace the URL above if you changed `OPEN_WEBUI_PORT`.
@@ -81,6 +84,20 @@ After syncing the pipe, select the `ChatLobby Publish` model in Open WebUI and s
 
 The pipe writes the document into the canonical repository and replies with the saved path.
 
+## Claude Adapter
+
+The first Phase C adapter is a local HTTP service that wraps `claude -p --output-format json`.
+
+```bash
+# Create a Claude task
+curl -X POST http://127.0.0.1:8787/tasks \
+  -H 'Content-Type: application/json' \
+  -d '{"prompt":"Reply with exactly ok.","workingDirectory":"'"$(pwd)"'"}'
+
+# Poll task status
+curl http://127.0.0.1:8787/tasks/<task-id>
+```
+
 ## Manual Verification
 
 1. Sign in with the admin account from `.env`.
@@ -89,6 +106,7 @@ The pipe writes the document into the canonical repository and replies with the 
 4. Use the terminal file tools or File Browser to list `/workspace` and verify `repos/` and `templates/` appear.
 5. For phone testing, open `http://<your-lan-ip>:<OPEN_WEBUI_PORT>` from a device on the same network.
 6. Sync `chatlobby_publish`, select the `ChatLobby Publish` model, and confirm a chat request writes a file under `/workspace/templates/chatlobby-canonical/`.
+7. Start `services/claude-adapter/src/server.ts`, submit a task to `POST /tasks`, and confirm the task reaches `succeeded`.
 
 ## Architecture
 
