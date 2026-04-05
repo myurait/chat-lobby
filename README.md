@@ -56,6 +56,12 @@ python3 tools/sync_openwebui_publish_pipe.py \
 
 # Start the local Claude adapter
 node services/claude-adapter/src/server.ts
+
+# Register the Open WebUI Claude task pipe
+python3 tools/sync_openwebui_claude_pipe.py \
+  --webui-url http://localhost:3000 \
+  --email admin@example.com \
+  --password chatlobby-admin-password
 ```
 
 Replace the URL above if you changed `OPEN_WEBUI_PORT`.
@@ -89,6 +95,9 @@ The pipe writes the document into the canonical repository and replies with the 
 The first Phase C adapter is a local HTTP service that wraps `claude -p --output-format json`.
 
 ```bash
+# Start the adapter for Open WebUI integration
+CLAUDE_ADAPTER_HOST=0.0.0.0 node services/claude-adapter/src/server.ts
+
 # Create a Claude task
 curl -X POST http://127.0.0.1:8787/tasks \
   -H 'Content-Type: application/json' \
@@ -98,6 +107,17 @@ curl -X POST http://127.0.0.1:8787/tasks \
 curl http://127.0.0.1:8787/tasks/<task-id>
 ```
 
+After syncing the pipe, select the `ChatLobby Claude Task` model in Open WebUI and send a JSON message like this:
+
+```json
+{
+  "prompt": "Reply with exactly ok.",
+  "workingDirectory": "/Users/you/path/to/repo"
+}
+```
+
+The pipe creates a Claude task through the local adapter and returns the task result to chat.
+
 ## Manual Verification
 
 1. Sign in with the admin account from `.env`.
@@ -106,7 +126,7 @@ curl http://127.0.0.1:8787/tasks/<task-id>
 4. Use the terminal file tools or File Browser to list `/workspace` and verify `repos/` and `templates/` appear.
 5. For phone testing, open `http://<your-lan-ip>:<OPEN_WEBUI_PORT>` from a device on the same network.
 6. Sync `chatlobby_publish`, select the `ChatLobby Publish` model, and confirm a chat request writes a file under `/workspace/templates/chatlobby-canonical/`.
-7. Start `services/claude-adapter/src/server.ts`, submit a task to `POST /tasks`, and confirm the task reaches `succeeded`.
+7. Start the Claude adapter with `CLAUDE_ADAPTER_HOST=0.0.0.0`, sync `chatlobby_claude_task`, and confirm the `ChatLobby Claude Task` model returns a completed task result in chat.
 
 ## Architecture
 

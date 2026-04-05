@@ -56,6 +56,12 @@ python3 tools/sync_openwebui_publish_pipe.py \
 
 # ローカル Claude adapter を起動
 node services/claude-adapter/src/server.ts
+
+# Open WebUI に Claude task pipe を登録
+python3 tools/sync_openwebui_claude_pipe.py \
+  --webui-url http://localhost:3000 \
+  --email admin@example.com \
+  --password chatlobby-admin-password
 ```
 
 `OPEN_WEBUI_PORT` を変更した場合は、この URL も合わせて置き換える。
@@ -89,6 +95,9 @@ pipe は canonical repo へ文書を書き込み、保存先パスを返す。
 Phase C の最初の adapter は、`claude -p --output-format json` を包むローカル HTTP サービスである。
 
 ```bash
+# Open WebUI から使う場合は host から到達できる bind で起動
+CLAUDE_ADAPTER_HOST=0.0.0.0 node services/claude-adapter/src/server.ts
+
 # Claude task を作成
 curl -X POST http://127.0.0.1:8787/tasks \
   -H 'Content-Type: application/json' \
@@ -98,6 +107,17 @@ curl -X POST http://127.0.0.1:8787/tasks \
 curl http://127.0.0.1:8787/tasks/<task-id>
 ```
 
+pipe を同期した後、Open WebUI で `ChatLobby Claude Task` モデルを選び、次のような JSON を送る。
+
+```json
+{
+  "prompt": "Reply with exactly ok.",
+  "workingDirectory": "/Users/you/path/to/repo"
+}
+```
+
+pipe はローカル Claude adapter に task を作成し、完了結果を会話へ返す。
+
 ## 手動確認
 
 1. `.env` の管理者アカウントでログインする。
@@ -106,7 +126,7 @@ curl http://127.0.0.1:8787/tasks/<task-id>
 4. terminal の file tools または File Browser で `/workspace` を列挙し、`repos/` と `templates/` が見えることを確認する。
 5. スマホ確認では、同一ネットワーク上の端末から `http://<LAN内IP>:<OPEN_WEBUI_PORT>` を開く。
 6. `chatlobby_publish` を同期し、`ChatLobby Publish` モデルで送った会話が `/workspace/templates/chatlobby-canonical/` に保存されることを確認する。
-7. `services/claude-adapter/src/server.ts` を起動し、`POST /tasks` に送った task が `succeeded` になることを確認する。
+7. Claude adapter を `CLAUDE_ADAPTER_HOST=0.0.0.0` で起動し、`chatlobby_claude_task` を同期したうえで、`ChatLobby Claude Task` モデルが完了結果を会話へ返すことを確認する。
 
 ## アーキテクチャ
 

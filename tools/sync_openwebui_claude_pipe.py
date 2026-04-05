@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Register or update the ChatLobby publish pipe in Open WebUI."""
+"""Register or update the ChatLobby Claude task pipe in Open WebUI."""
 
 from __future__ import annotations
 
@@ -9,20 +9,21 @@ from pathlib import Path
 
 from openwebui_sync import ensure_active, ensure_function, sign_in
 
+
 ROOT_DIR = Path(__file__).resolve().parents[1]
-DEFAULT_PIPE_FILE = ROOT_DIR / "tools" / "openwebui" / "chatlobby_publish_pipe.py"
+DEFAULT_PIPE_FILE = ROOT_DIR / "tools" / "openwebui" / "chatlobby_claude_task_pipe.py"
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Register or update the ChatLobby publish pipe in Open WebUI.")
+    parser = argparse.ArgumentParser(description="Register or update the ChatLobby Claude task pipe in Open WebUI.")
     parser.add_argument("--webui-url", default=os.environ.get("WEBUI_URL", "http://localhost:3000"))
     parser.add_argument("--email", default=os.environ.get("WEBUI_ADMIN_EMAIL"))
     parser.add_argument("--password", default=os.environ.get("WEBUI_ADMIN_PASSWORD"))
-    parser.add_argument("--function-id", default="chatlobby_publish")
-    parser.add_argument("--name", default="ChatLobby Publish")
+    parser.add_argument("--function-id", default="chatlobby_claude_task")
+    parser.add_argument("--name", default="ChatLobby Claude Task")
     parser.add_argument(
         "--description",
-        default="Publish a spec, ADR, or worklog Markdown document into the canonical Git repository.",
+        default="Run a Claude Code task through the local Claude adapter and return the result to chat.",
     )
     parser.add_argument("--pipe-file", default=str(DEFAULT_PIPE_FILE))
     return parser
