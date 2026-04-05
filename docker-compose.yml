@@ -1,0 +1,55 @@
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: chatlobby-ollama
+    restart: unless-stopped
+    volumes:
+      - ollama:/root/.ollama
+
+  open-terminal:
+    image: ghcr.io/open-webui/open-terminal:latest
+    container_name: chatlobby-open-terminal
+    restart: unless-stopped
+    volumes:
+      - open-terminal:/home/user
+    environment:
+      OPEN_TERMINAL_API_KEY: ${OPEN_TERMINAL_API_KEY}
+      OPEN_TERMINAL_EXECUTE_TIMEOUT: 5
+      OPEN_TERMINAL_MAX_SESSIONS: 8
+    cpus: 2
+    mem_limit: 2g
+
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:latest
+    container_name: chatlobby-open-webui
+    restart: unless-stopped
+    depends_on:
+      - ollama
+      - open-terminal
+    ports:
+      - "${OPEN_WEBUI_PORT:-3000}:8080"
+    volumes:
+      - open-webui:/app/backend/data
+    environment:
+      OLLAMA_BASE_URL: http://ollama:11434
+      WEBUI_URL: ${WEBUI_URL:-http://localhost:3000}
+      WEBUI_SECRET_KEY: ${WEBUI_SECRET_KEY}
+      WEBUI_ADMIN_NAME: ${WEBUI_ADMIN_NAME:-ChatLobby Admin}
+      WEBUI_ADMIN_EMAIL: ${WEBUI_ADMIN_EMAIL}
+      WEBUI_ADMIN_PASSWORD: ${WEBUI_ADMIN_PASSWORD}
+      ENABLE_SIGNUP: "false"
+      ENABLE_LOGIN_FORM: "true"
+      ENABLE_PASSWORD_AUTH: "true"
+      DEFAULT_LOCALE: ${DEFAULT_LOCALE:-ja}
+      ENABLE_CHANNELS: "true"
+      ENABLE_FOLDERS: "true"
+      ENABLE_NOTES: "true"
+      TERMINAL_SERVER_CONNECTIONS: >-
+        [{"id":"chatlobby-docker-terminal","url":"http://open-terminal:8000","key":"${OPEN_TERMINAL_API_KEY}","name":"ChatLobby Docker Terminal","auth_type":"bearer","config":{"access_grants":[]}}]
+    extra_hosts:
+      - host.docker.internal:host-gateway
+
+volumes:
+  ollama:
+  open-terminal:
+  open-webui:
