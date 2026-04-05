@@ -70,6 +70,9 @@ set +a
 # Start the local Claude adapter
 CLAUDE_ADAPTER_HOST=0.0.0.0 node services/claude-adapter/src/server.ts
 
+# Start the local status store
+STATUS_STORE_HOST=0.0.0.0 node services/status-store/src/server.ts
+
 # Register the Open WebUI Claude task pipe
 python3 tools/sync_openwebui_claude_pipe.py \
   --webui-url http://localhost:3000 \
@@ -93,10 +96,39 @@ python3 tools/sync_openwebui_dispatch_pipe.py \
   --webui-url http://localhost:3000 \
   --email admin@example.com \
   --password chatlobby-admin-password
+
+# Register the Open WebUI status panel pipe
+python3 tools/sync_openwebui_status_pipe.py \
+  --webui-url http://localhost:3000 \
+  --email admin@example.com \
+  --password chatlobby-admin-password
 ```
 
 Replace the URL above if you changed `OPEN_WEBUI_PORT`.
 The `typecheck` script expects `tsc` to be available in your shell.
+
+## Status Store
+
+The status store is the Phase F sidecar that normalizes worker progress into a single task stream.
+
+```bash
+# Start the status store for Open WebUI integration
+STATUS_STORE_HOST=0.0.0.0 node services/status-store/src/server.ts
+
+# Push a smoke-test event directly
+curl -X POST http://127.0.0.1:8791/events \
+  -H "Authorization: Bearer ${CHATLOBBY_INTERNAL_API_TOKEN}" \
+  -H 'Content-Type: application/json' \
+  -d '{"taskId":"smoke-task","worker":"knowledge","state":"running","approvalState":"not_required","currentStep":"smoke test"}'
+
+# Read recent running work
+curl "http://127.0.0.1:8791/tasks?state=running&limit=10" \
+  -H "Authorization: Bearer ${CHATLOBBY_INTERNAL_API_TOKEN}"
+```
+
+Adapters publish best-effort status events to `CHATLOBBY_STATUS_STORE_URL` and derive a normalized
+`approvalState` so the frontdoor can show whether work may need approval, was bypassed, or does not
+require approval.
 
 ## Shared Repo Template
 
@@ -234,6 +266,32 @@ Implement the feature and reply with exactly ok.
 Send JSON only when you need override fields such as `workerHint`, `repoPath`, or `workingDirectory`.
 If a synced pipe does not pick up the token automatically, set `api_bearer_token` in that function's valves and sync it again.
 
+## Status Panel
+
+After syncing the pipe, select the `ChatLobby Status Panel` model in Open WebUI and send plain text or JSON.
+
+```text
+status
+```
+
+```json
+{
+  "state": "running",
+  "worker": "codex",
+  "limit": 10
+}
+```
+
+To inspect a single record, send:
+
+```json
+{
+  "statusId": "codex:<task-id>"
+}
+```
+
+The panel returns the normalized worker, state, approval visibility, current step, and latest update timestamp.
+
 ## Manual Verification
 
 1. Sign in with the admin account from `.env`.
@@ -246,6 +304,7 @@ If a synced pipe does not pick up the token automatically, set `api_bearer_token
 8. Start the Codex adapter with `CODEX_ADAPTER_HOST=0.0.0.0`, sync `chatlobby_codex_task`, and confirm the `ChatLobby Codex Task` model returns a completed task result in chat.
 9. Start the knowledge adapter with `KNOWLEDGE_ADAPTER_HOST=0.0.0.0`, sync `chatlobby_knowledge_query`, and confirm the `ChatLobby Knowledge Query` model returns search results from the canonical repo.
 10. Start the dispatcher with `DISPATCHER_HOST=0.0.0.0`, sync `chatlobby_dispatch_task`, and confirm plain-text requests such as `Implement ...`, `この不具合を直して`, and `README.ja.md を検索して` are routed to Codex, Claude, and knowledge respectively.
+11. Start the status store with `STATUS_STORE_HOST=0.0.0.0`, sync `chatlobby_status_panel`, run a Claude / Codex / knowledge task, and confirm the `ChatLobby Status Panel` model shows the `worker`, `state`, `approval`, and `step` fields for the resulting `statusId`.
 
 ## Architecture
 
@@ -263,6 +322,7 @@ If a synced pipe does not pick up the token automatically, set `api_bearer_token
       |-- Codex adapter
       |-- Claude adapter
       |-- Git/MCP knowledge adapter
+      |-- status store
             |
     [Git repositories]  ← canonical source of truth
 ```

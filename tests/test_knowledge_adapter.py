@@ -69,6 +69,7 @@ class KnowledgeAdapterTests(unittest.TestCase):
                     payload = json.loads(response.read().decode("utf-8"))
 
                 self.assertEqual(response.status, 200)
+                self.assertTrue(payload["statusId"].startswith("knowledge:"))
                 self.assertEqual(payload["relativePath"], "README.ja.md")
                 self.assertIn("relative path content", payload["content"])
             finally:
@@ -130,6 +131,7 @@ class KnowledgeAdapterTests(unittest.TestCase):
                     payload = json.loads(response.read().decode("utf-8"))
 
                 self.assertEqual(response.status, 200)
+                self.assertTrue(payload["statusId"].startswith("knowledge:"))
                 self.assertEqual(payload["items"][0]["relativePath"], "README.ja.md")
                 self.assertEqual(payload["items"][0]["content"], "[path match]")
             finally:
@@ -191,6 +193,7 @@ class KnowledgeAdapterTests(unittest.TestCase):
                     payload = json.loads(response.read().decode("utf-8"))
 
                 self.assertEqual(response.status, 200)
+                self.assertTrue(payload["statusId"].startswith("knowledge:"))
                 self.assertEqual(payload["items"], [])
             finally:
                 process.terminate()

@@ -1,9 +1,11 @@
 import { execFile, spawn } from "node:child_process";
+import { randomUUID } from "node:crypto";
 import { promisify } from "node:util";
 import { readFile } from "node:fs/promises";
 import { isAbsolute, relative, resolve } from "node:path";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { HttpError, notFound, readJsonBody, requireBearerToken, requireTokenForNonLoopbackBind, sendJson } from "../../shared/http.ts";
+import { buildStatusId, publishStatusEvent } from "../../shared/status.ts";
 
 const execFileAsync = promisify(execFile);
 
@@ -25,6 +27,8 @@ const DEFAULT_REPO_PATH = process.env.KNOWLEDGE_REPO_PATH ?? resolve(process.cwd
 const MAX_RESULTS = Number(process.env.KNOWLEDGE_MAX_RESULTS ?? "10");
 const MAX_BYTES = Number(process.env.KNOWLEDGE_MAX_BYTES ?? "12000");
 const API_TOKEN = process.env.KNOWLEDGE_ADAPTER_API_TOKEN ?? process.env.CHATLOBBY_INTERNAL_API_TOKEN ?? "";
+const STATUS_STORE_URL = process.env.STATUS_STORE_URL ?? process.env.CHATLOBBY_STATUS_STORE_URL ?? "";
+const STATUS_STORE_TOKEN = process.env.STATUS_STORE_API_TOKEN ?? process.env.CHATLOBBY_INTERNAL_API_TOKEN ?? "";
 
 requireTokenForNonLoopbackBind("knowledge-adapter", HOST, API_TOKEN);
 
@@ -226,8 +230,36 @@ const server = createServer(async (request, response) => {
 
   if (request.method === "POST" && url.pathname === "/search") {
     try {
+      const taskId = randomUUID();
+      const statusId = buildStatusId("knowledge", taskId);
       const payload = parseSearchRequest(await readJsonBody(request));
-      sendJson(response, 200, await handleSearch(payload));
+      void publishStatusEvent(STATUS_STORE_URL, STATUS_STORE_TOKEN, {
+        statusId,
+        taskId,
+        worker: "knowledge",
+        state: "running",
+        title: "Knowledge search",
+        prompt: payload.query,
+        workingDirectory: ensureRepoRoot(payload.repoPath),
+        currentStep: "search started",
+        lastAction: "rg search",
+        approvalState: "not_required",
+      }).catch(() => {});
+      const result = await handleSearch(payload);
+      void publishStatusEvent(STATUS_STORE_URL, STATUS_STORE_TOKEN, {
+        statusId,
+        taskId,
+        worker: "knowledge",
+        state: "succeeded",
+        title: "Knowledge search",
+        prompt: payload.query,
+        workingDirectory: result.repoRoot,
+        currentStep: "completed",
+        lastAction: "search result returned",
+        approvalState: "not_required",
+        resultSummary: `${result.items.length} match(es)`,
+      }).catch(() => {});
+      sendJson(response, 200, { statusId, ...result });
       return;
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
@@ -238,8 +270,36 @@ const server = createServer(async (request, response) => {
 
   if (request.method === "POST" && url.pathname === "/read") {
     try {
+      const taskId = randomUUID();
+      const statusId = buildStatusId("knowledge", taskId);
       const payload = parseReadRequest(await readJsonBody(request));
-      sendJson(response, 200, await handleRead(payload));
+      void publishStatusEvent(STATUS_STORE_URL, STATUS_STORE_TOKEN, {
+        statusId,
+        taskId,
+        worker: "knowledge",
+        state: "running",
+        title: "Knowledge read",
+        prompt: payload.path,
+        workingDirectory: ensureRepoRoot(payload.repoPath),
+        currentStep: "read started",
+        lastAction: "file read",
+        approvalState: "not_required",
+      }).catch(() => {});
+      const result = await handleRead(payload);
+      void publishStatusEvent(STATUS_STORE_URL, STATUS_STORE_TOKEN, {
+        statusId,
+        taskId,
+        worker: "knowledge",
+        state: "succeeded",
+        title: "Knowledge read",
+        prompt: payload.path,
+        workingDirectory: result.repoRoot,
+        currentStep: "completed",
+        lastAction: "file read returned",
+        approvalState: "not_required",
+        resultSummary: result.relativePath,
+      }).catch(() => {});
+      sendJson(response, 200, { statusId, ...result });
       return;
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);

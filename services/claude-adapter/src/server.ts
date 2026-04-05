@@ -2,6 +2,7 @@ import { spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { createServer } from "node:http";
 import { HttpError, notFound, readJsonBody, requireBearerToken, requireTokenForNonLoopbackBind, sendJson } from "../../shared/http.ts";
+import { buildStatusId, publishStatusEvent, type ApprovalState } from "../../shared/status.ts";
 import { trimTasks } from "../../shared/tasks.ts";
 import { buildClaudeCommand, parseClaudeTaskRequest, type ClaudeTaskRequest } from "./task-request.ts";
 
@@ -9,6 +10,7 @@ type TaskState = "running" | "succeeded" | "failed";
 
 type ClaudeTaskRecord = {
   id: string;
+  statusId: string;
   state: TaskState;
   prompt: string;
   workingDirectory: string;
@@ -28,10 +30,16 @@ const CLAUDE_BIN = process.env.CLAUDE_CODE_BIN ?? "claude";
 const DEFAULT_PERMISSION_MODE = process.env.CLAUDE_PERMISSION_MODE ?? "acceptEdits";
 const MAX_TASKS = Number(process.env.CLAUDE_ADAPTER_MAX_TASKS ?? "50");
 const API_TOKEN = process.env.CLAUDE_ADAPTER_API_TOKEN ?? process.env.CHATLOBBY_INTERNAL_API_TOKEN ?? "";
+const STATUS_STORE_URL = process.env.STATUS_STORE_URL ?? process.env.CHATLOBBY_STATUS_STORE_URL ?? "";
+const STATUS_STORE_TOKEN = process.env.STATUS_STORE_API_TOKEN ?? process.env.CHATLOBBY_INTERNAL_API_TOKEN ?? "";
 
 requireTokenForNonLoopbackBind("claude-adapter", HOST, API_TOKEN);
 
 const tasks = new Map<string, ClaudeTaskRecord>();
+
+function deriveApprovalState(task: ClaudeTaskRequest): ApprovalState {
+  return (task.permissionMode ?? DEFAULT_PERMISSION_MODE) === "acceptEdits" ? "not_required" : "unknown";
+}
 
 function runTask(task: ClaudeTaskRecord, request: ClaudeTaskRequest): void {
   const child = spawn(CLAUDE_BIN, task.command, {
@@ -64,11 +72,41 @@ function runTask(task: ClaudeTaskRecord, request: ClaudeTaskRequest): void {
       } catch {
         task.result = { raw: task.stdout };
       }
+      void publishStatusEvent(STATUS_STORE_URL, STATUS_STORE_TOKEN, {
+        statusId: task.statusId,
+        taskId: task.id,
+        worker: "claude",
+        state: "succeeded",
+        title: "Claude task",
+        prompt: task.prompt,
+        workingDirectory: task.workingDirectory,
+        currentStep: "completed",
+        lastAction: "process exit",
+        approvalState: deriveApprovalState(request),
+        resultSummary: typeof task.result === "object" && task.result !== null && "result" in task.result
+          ? String((task.result as Record<string, unknown>).result)
+          : task.stdout,
+        completedAt: task.completedAt,
+      }).catch(() => {});
       return;
     }
 
     task.state = "failed";
     task.error = task.stderr || task.stdout || `Claude exited with code ${code}`;
+    void publishStatusEvent(STATUS_STORE_URL, STATUS_STORE_TOKEN, {
+      statusId: task.statusId,
+      taskId: task.id,
+      worker: "claude",
+      state: "failed",
+      title: "Claude task",
+      prompt: task.prompt,
+      workingDirectory: task.workingDirectory,
+      currentStep: "failed",
+      lastAction: "process exit",
+      approvalState: deriveApprovalState(request),
+      error: task.error,
+      completedAt: task.completedAt,
+    }).catch(() => {});
   });
 
   child.on("error", (error) => {
@@ -76,6 +114,20 @@ function runTask(task: ClaudeTaskRecord, request: ClaudeTaskRequest): void {
     task.exitCode = null;
     task.state = "failed";
     task.error = error.message;
+    void publishStatusEvent(STATUS_STORE_URL, STATUS_STORE_TOKEN, {
+      statusId: task.statusId,
+      taskId: task.id,
+      worker: "claude",
+      state: "failed",
+      title: "Claude task",
+      prompt: task.prompt,
+      workingDirectory: task.workingDirectory,
+      currentStep: "spawn error",
+      lastAction: "spawn",
+      approvalState: deriveApprovalState(request),
+      error: task.error,
+      completedAt: task.completedAt,
+    }).catch(() => {});
   });
 }
 
@@ -106,6 +158,7 @@ const server = createServer(async (request, response) => {
     sendJson(response, 200, {
       items: Array.from(tasks.values()).map((task) => ({
         id: task.id,
+        statusId: task.statusId,
         state: task.state,
         createdAt: task.createdAt,
         completedAt: task.completedAt,
@@ -133,6 +186,7 @@ const server = createServer(async (request, response) => {
       const id = randomUUID();
       const task: ClaudeTaskRecord = {
         id,
+        statusId: buildStatusId("claude", id),
         state: "running",
         prompt: payload.prompt,
         workingDirectory: payload.workingDirectory ?? process.cwd(),
@@ -142,10 +196,24 @@ const server = createServer(async (request, response) => {
 
       trimTasks(tasks, MAX_TASKS);
       tasks.set(id, task);
+      void publishStatusEvent(STATUS_STORE_URL, STATUS_STORE_TOKEN, {
+        statusId: task.statusId,
+        taskId: task.id,
+        worker: "claude",
+        state: "running",
+        title: "Claude task",
+        prompt: task.prompt,
+        workingDirectory: task.workingDirectory,
+        currentStep: "task started",
+        lastAction: "claude spawn",
+        approvalState: deriveApprovalState(payload),
+        createdAt: task.createdAt,
+      }).catch(() => {});
       runTask(task, payload);
 
       sendJson(response, 202, {
         id: task.id,
+        statusId: task.statusId,
         state: task.state,
         createdAt: task.createdAt,
       });

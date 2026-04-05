@@ -2,6 +2,7 @@ import { spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { createServer } from "node:http";
 import { HttpError, notFound, readJsonBody, requireBearerToken, requireTokenForNonLoopbackBind, sendJson } from "../../shared/http.ts";
+import { buildStatusId, publishStatusEvent, type ApprovalState } from "../../shared/status.ts";
 import { trimTasks } from "../../shared/tasks.ts";
 import {
   buildCodexCommand,
@@ -13,6 +14,7 @@ type TaskState = "running" | "succeeded" | "failed";
 
 type CodexTaskRecord = {
   id: string;
+  statusId: string;
   state: TaskState;
   prompt: string;
   workingDirectory: string;
@@ -35,10 +37,19 @@ const DEFAULT_SKIP_GIT_REPO_CHECK = process.env.CODEX_SKIP_GIT_REPO_CHECK !== "f
 const DEFAULT_BYPASS_APPROVALS = process.env.CODEX_BYPASS_APPROVALS_AND_SANDBOX === "true";
 const MAX_TASKS = Number(process.env.CODEX_ADAPTER_MAX_TASKS ?? "50");
 const API_TOKEN = process.env.CODEX_ADAPTER_API_TOKEN ?? process.env.CHATLOBBY_INTERNAL_API_TOKEN ?? "";
+const STATUS_STORE_URL = process.env.STATUS_STORE_URL ?? process.env.CHATLOBBY_STATUS_STORE_URL ?? "";
+const STATUS_STORE_TOKEN = process.env.STATUS_STORE_API_TOKEN ?? process.env.CHATLOBBY_INTERNAL_API_TOKEN ?? "";
 
 requireTokenForNonLoopbackBind("codex-adapter", HOST, API_TOKEN);
 
 const tasks = new Map<string, CodexTaskRecord>();
+
+function deriveApprovalState(task: CodexTaskRequest): ApprovalState {
+  if (task.bypassApprovalsAndSandbox) {
+    return "bypassed";
+  }
+  return "may_require_approval";
+}
 
 function parseCodexJsonl(stdout: string): unknown {
   const events = stdout
@@ -87,11 +98,42 @@ function runTask(task: CodexTaskRecord, request: CodexTaskRequest): void {
     if (code === 0) {
       task.state = "succeeded";
       task.result = parseCodexJsonl(task.stdout ?? "");
+      void publishStatusEvent(STATUS_STORE_URL, STATUS_STORE_TOKEN, {
+        statusId: task.statusId,
+        taskId: task.id,
+        worker: "codex",
+        state: "succeeded",
+        title: "Codex task",
+        prompt: task.prompt,
+        workingDirectory: task.workingDirectory,
+        currentStep: "completed",
+        lastAction: "process exit",
+        approvalState: deriveApprovalState(request),
+        resultSummary:
+          typeof task.result === "object" && task.result !== null && "message" in task.result
+            ? String((task.result as Record<string, unknown>).message)
+            : task.stdout,
+        completedAt: task.completedAt,
+      }).catch(() => {});
       return;
     }
 
     task.state = "failed";
     task.error = task.stderr || task.stdout || `Codex exited with code ${code}`;
+    void publishStatusEvent(STATUS_STORE_URL, STATUS_STORE_TOKEN, {
+      statusId: task.statusId,
+      taskId: task.id,
+      worker: "codex",
+      state: "failed",
+      title: "Codex task",
+      prompt: task.prompt,
+      workingDirectory: task.workingDirectory,
+      currentStep: "failed",
+      lastAction: "process exit",
+      approvalState: deriveApprovalState(request),
+      error: task.error,
+      completedAt: task.completedAt,
+    }).catch(() => {});
   });
 
   child.on("error", (error) => {
@@ -99,6 +141,20 @@ function runTask(task: CodexTaskRecord, request: CodexTaskRequest): void {
     task.exitCode = null;
     task.state = "failed";
     task.error = error.message;
+    void publishStatusEvent(STATUS_STORE_URL, STATUS_STORE_TOKEN, {
+      statusId: task.statusId,
+      taskId: task.id,
+      worker: "codex",
+      state: "failed",
+      title: "Codex task",
+      prompt: task.prompt,
+      workingDirectory: task.workingDirectory,
+      currentStep: "spawn error",
+      lastAction: "spawn",
+      approvalState: deriveApprovalState(request),
+      error: task.error,
+      completedAt: task.completedAt,
+    }).catch(() => {});
   });
 }
 
@@ -129,6 +185,7 @@ const server = createServer(async (request, response) => {
     sendJson(response, 200, {
       items: Array.from(tasks.values()).map((task) => ({
         id: task.id,
+        statusId: task.statusId,
         state: task.state,
         createdAt: task.createdAt,
         completedAt: task.completedAt,
@@ -161,6 +218,7 @@ const server = createServer(async (request, response) => {
       const id = randomUUID();
       const task: CodexTaskRecord = {
         id,
+        statusId: buildStatusId("codex", id),
         state: "running",
         prompt: payload.prompt,
         workingDirectory: payload.workingDirectory ?? process.cwd(),
@@ -170,10 +228,24 @@ const server = createServer(async (request, response) => {
 
       trimTasks(tasks, MAX_TASKS);
       tasks.set(id, task);
+      void publishStatusEvent(STATUS_STORE_URL, STATUS_STORE_TOKEN, {
+        statusId: task.statusId,
+        taskId: task.id,
+        worker: "codex",
+        state: "running",
+        title: "Codex task",
+        prompt: task.prompt,
+        workingDirectory: task.workingDirectory,
+        currentStep: "task started",
+        lastAction: "codex spawn",
+        approvalState: deriveApprovalState(payload),
+        createdAt: task.createdAt,
+      }).catch(() => {});
       runTask(task, payload);
 
       sendJson(response, 202, {
         id: task.id,
+        statusId: task.statusId,
         state: task.state,
         createdAt: task.createdAt,
       });
