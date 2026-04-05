@@ -26,6 +26,8 @@ docker compose exec ollama ollama pull qwen3:8b
 
 Open Terminal は Docker 内ネットワークで事前接続するため、端末 API をホストへ直接公開せずに
 Open WebUI からターミナルと File Browser を利用できる。
+また、ホスト側の [`workspace/`](/Users/fox4foofighter/dev/chat-lobby/workspace/README.md) を
+コンテナ内 `/workspace` に専用作業領域として mount する。
 
 ## 開発
 
@@ -37,6 +39,12 @@ WEBUI_ADMIN_PASSWORD=test-password \
 OPEN_TERMINAL_API_KEY=test-terminal-key \
 docker compose config
 ```
+
+## 共有 Git リポジトリテンプレート
+
+- `workspace/templates/chatlobby-canonical/` に、共有正本 Git リポジトリの初期ディレクトリ構成を置く。
+- `workspace/repos/` は Open Terminal から clone した実運用リポジトリや一時作業置き場として使う。
+- 専用 workspace mount により、端末が参照するホスト側作業領域を意図した範囲に限定する。
 
 ## アーキテクチャ
 

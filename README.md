@@ -26,6 +26,8 @@ The first boot creates the admin user automatically and keeps public sign-up dis
 
 Open Terminal is pre-configured through the internal Docker network, so the terminal and file browser are
 available from Open WebUI without exposing the terminal API to the host.
+The host-side [`workspace/`](/Users/fox4foofighter/dev/chat-lobby/workspace/README.md) directory is mounted into the
+terminal container at `/workspace` as the dedicated working area.
 
 ## Development
 
@@ -37,6 +39,12 @@ WEBUI_ADMIN_PASSWORD=test-password \
 OPEN_TERMINAL_API_KEY=test-terminal-key \
 docker compose config
 ```
+
+## Shared Repo Template
+
+- `workspace/templates/chatlobby-canonical/` provides the initial directory layout for the shared canonical Git repository.
+- `workspace/repos/` is reserved for runtime clones and scratch repositories opened from Open Terminal.
+- The dedicated workspace mount narrows terminal access to the intended project work area instead of the full host filesystem.
 
 ## Architecture
 
