@@ -60,7 +60,7 @@ docker compose config
 
 ## 開発文書
 
-- `development-docs/AI_RUNTIME_RULES.md`: AI の実行時安全ルール
+- `development-docs/rules/AI_RUNTIME_RULES.md`: AI の実行時安全ルール
 - `development-docs/AI_KNOWLEDGE.md`: AI ナレッジの入口
 - `development-docs/INDEX.md`: 開発文書の入口
 - `development-docs/roadmap/01-initial-roadmap.md`: 現在のロードマップとフェーズ状況

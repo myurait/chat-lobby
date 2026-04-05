@@ -60,7 +60,7 @@ docker compose config
 
 ## Development Docs
 
-- `development-docs/AI_RUNTIME_RULES.md`: AI runtime safety rules
+- `development-docs/rules/AI_RUNTIME_RULES.md`: AI runtime safety rules
 - `development-docs/AI_KNOWLEDGE.md`: AI knowledge entry point
 - `development-docs/INDEX.md`: development documentation index
 - `development-docs/roadmap/01-initial-roadmap.md`: current roadmap and phase status
