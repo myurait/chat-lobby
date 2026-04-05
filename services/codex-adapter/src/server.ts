@@ -1,19 +1,15 @@
 import { spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
-import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
+import { createServer } from "node:http";
 import { HttpError, notFound, readJsonBody, requireBearerToken, requireTokenForNonLoopbackBind, sendJson } from "../../shared/http.ts";
 import { trimTasks } from "../../shared/tasks.ts";
+import {
+  buildCodexCommand,
+  parseCodexTaskRequest,
+  type CodexTaskRequest,
+} from "./task-request.ts";
 
 type TaskState = "running" | "succeeded" | "failed";
-
-type CodexTaskRequest = {
-  prompt: string;
-  workingDirectory?: string;
-  model?: string;
-  sandboxMode?: "read-only" | "workspace-write" | "danger-full-access";
-  skipGitRepoCheck?: boolean;
-  bypassApprovalsAndSandbox?: boolean;
-};
 
 type CodexTaskRecord = {
   id: string;
@@ -43,60 +39,6 @@ const API_TOKEN = process.env.CODEX_ADAPTER_API_TOKEN ?? process.env.CHATLOBBY_I
 requireTokenForNonLoopbackBind("codex-adapter", HOST, API_TOKEN);
 
 const tasks = new Map<string, CodexTaskRecord>();
-
-function parseTaskRequest(input: unknown): CodexTaskRequest {
-  if (typeof input !== "object" || input === null) {
-    throw new Error("Request body must be a JSON object.");
-  }
-
-  const request = input as Record<string, unknown>;
-  if (typeof request.prompt !== "string" || request.prompt.trim() === "") {
-    throw new Error("`prompt` is required.");
-  }
-
-  const sandboxMode =
-    typeof request.sandboxMode === "string" &&
-    ["read-only", "workspace-write", "danger-full-access"].includes(request.sandboxMode)
-      ? (request.sandboxMode as CodexTaskRequest["sandboxMode"])
-      : DEFAULT_SANDBOX_MODE;
-
-  return {
-    prompt: request.prompt,
-    workingDirectory:
-      typeof request.workingDirectory === "string" && request.workingDirectory.trim() !== ""
-        ? request.workingDirectory
-        : process.cwd(),
-    model: typeof request.model === "string" && request.model.trim() !== "" ? request.model : undefined,
-    sandboxMode,
-    skipGitRepoCheck:
-      typeof request.skipGitRepoCheck === "boolean" ? request.skipGitRepoCheck : DEFAULT_SKIP_GIT_REPO_CHECK,
-    bypassApprovalsAndSandbox:
-      typeof request.bypassApprovalsAndSandbox === "boolean"
-        ? request.bypassApprovalsAndSandbox
-        : DEFAULT_BYPASS_APPROVALS,
-  };
-}
-
-function buildCodexCommand(task: CodexTaskRequest): string[] {
-  const command = ["exec", "--json"];
-
-  if (task.skipGitRepoCheck) {
-    command.push("--skip-git-repo-check");
-  }
-
-  if (task.bypassApprovalsAndSandbox) {
-    command.push("--dangerously-bypass-approvals-and-sandbox");
-  } else if (task.sandboxMode) {
-    command.push("--sandbox", task.sandboxMode);
-  }
-
-  if (task.model) {
-    command.push("--model", task.model);
-  }
-
-  command.push(task.prompt);
-  return command;
-}
 
 function parseCodexJsonl(stdout: string): unknown {
   const events = stdout
@@ -210,7 +152,12 @@ const server = createServer(async (request, response) => {
 
   if (request.method === "POST" && url.pathname === "/tasks") {
     try {
-      const payload = parseTaskRequest(await readJsonBody(request));
+      const payload = parseCodexTaskRequest(
+        await readJsonBody(request),
+        DEFAULT_SANDBOX_MODE,
+        DEFAULT_SKIP_GIT_REPO_CHECK,
+        DEFAULT_BYPASS_APPROVALS,
+      );
       const id = randomUUID();
       const task: CodexTaskRecord = {
         id,

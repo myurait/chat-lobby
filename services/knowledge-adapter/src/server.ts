@@ -214,9 +214,18 @@ const server = createServer(async (request, response) => {
     return;
   }
 
+  try {
+    requireBearerToken(request, API_TOKEN);
+  } catch (error) {
+    if (error instanceof HttpError) {
+      sendJson(response, error.statusCode, { error: error.message });
+      return;
+    }
+    throw error;
+  }
+
   if (request.method === "POST" && url.pathname === "/search") {
     try {
-      requireBearerToken(request, API_TOKEN);
       const payload = parseSearchRequest(await readJsonBody(request));
       sendJson(response, 200, await handleSearch(payload));
       return;
@@ -229,7 +238,6 @@ const server = createServer(async (request, response) => {
 
   if (request.method === "POST" && url.pathname === "/read") {
     try {
-      requireBearerToken(request, API_TOKEN);
       const payload = parseReadRequest(await readJsonBody(request));
       sendJson(response, 200, await handleRead(payload));
       return;

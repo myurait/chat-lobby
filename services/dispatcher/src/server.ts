@@ -2,28 +2,14 @@ import { createServer, type IncomingMessage, type ServerResponse } from "node:ht
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { HttpError, notFound, readJsonBody, requireBearerToken, requireTokenForNonLoopbackBind, sendJson } from "../../shared/http.ts";
-
-type WorkerName = "claude" | "codex" | "knowledge";
-
-type DispatchRequest = {
-  prompt?: string;
-  query?: string;
-  path?: string;
-  repoPath?: string;
-  workingDirectory?: string;
-  workerHint?: WorkerName;
-  maxResults?: number;
-};
-
-type WorkerRules = {
-  explicitFields?: string[];
-  keywords?: string[];
-};
-
-type RoutingRules = {
-  workers: Record<WorkerName, WorkerRules>;
-  defaultWorker: WorkerName;
-};
+import {
+  normalizeKnowledgeQuery,
+  parseDispatchRequest,
+  routeRequest,
+  type DispatchRequest,
+  type RoutingRules,
+  type WorkerName,
+} from "./routing.ts";
 
 const PORT = Number(process.env.DISPATCHER_PORT ?? "8790");
 const HOST = process.env.DISPATCHER_HOST ?? "127.0.0.1";
@@ -83,69 +69,6 @@ function loadRoutingRules(filePath: string): RoutingRules {
 
 const routingRules = loadRoutingRules(RULES_FILE);
 
-function parseDispatchRequest(input: unknown): DispatchRequest {
-  if (typeof input !== "object" || input === null) {
-    throw new HttpError(400, "Request body must be a JSON object.");
-  }
-
-  const request = input as Record<string, unknown>;
-  const prompt = typeof request.prompt === "string" ? request.prompt.trim() : "";
-  const query = typeof request.query === "string" ? request.query.trim() : "";
-  const path = typeof request.path === "string" ? request.path.trim() : "";
-
-  if (!prompt && !query && !path) {
-    throw new HttpError(400, "One of `prompt`, `query`, or `path` is required.");
-  }
-
-  return {
-    prompt: prompt || undefined,
-    query: query || undefined,
-    path: path || undefined,
-    repoPath: typeof request.repoPath === "string" ? request.repoPath : undefined,
-    workingDirectory: typeof request.workingDirectory === "string" ? request.workingDirectory : undefined,
-    workerHint:
-      request.workerHint === "claude" || request.workerHint === "codex" || request.workerHint === "knowledge"
-        ? request.workerHint
-        : undefined,
-    maxResults: typeof request.maxResults === "number" ? request.maxResults : undefined,
-  };
-}
-
-function routeRequest(request: DispatchRequest): { worker: WorkerName; reason: string } {
-  if (request.workerHint) {
-    return { worker: request.workerHint, reason: "workerHint override" };
-  }
-
-  const explicitKnowledgeFields = new Set(routingRules.workers.knowledge.explicitFields ?? []);
-  if ((request.path && explicitKnowledgeFields.has("path")) || (request.query && explicitKnowledgeFields.has("query"))) {
-    return { worker: "knowledge", reason: "explicit knowledge fields" };
-  }
-
-  const prompt = (request.prompt ?? "").toLowerCase();
-  const workerOrder: WorkerName[] = ["knowledge", "claude", "codex"];
-
-  for (const worker of workerOrder) {
-    const matchedKeyword = (routingRules.workers[worker].keywords ?? []).find((hint) => prompt.includes(hint.toLowerCase()));
-    if (matchedKeyword) {
-      return { worker, reason: `${worker} keyword match: ${matchedKeyword}` };
-    }
-  }
-
-  return { worker: routingRules.defaultWorker, reason: `default fallback: ${routingRules.defaultWorker}` };
-}
-
-function normalizeKnowledgeQuery(prompt: string): string {
-  return prompt
-    .replace(/[。?？!！]/g, " ")
-    .replace(/\b(search|find|read|show|open)\b/gi, " ")
-    .replace(/\b(docs?|document|spec|adr|worklog|knowledge)\b/gi, " ")
-    .replace(/(仕様|要件|文書|ドキュメント|作業ログ|ログ)/g, " ")
-    .replace(/(を)?(検索して|探して|見つけて|読んで|見て|確認して|教えて)/g, " ")
-    .replace(/(について|に関する|を|の)/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
 async function requestJson(url: string, method: string, payload?: unknown): Promise<{ status: number; data: unknown }> {
   const body = payload === undefined ? undefined : JSON.stringify(payload);
   try {
@@ -200,7 +123,7 @@ async function executeTaskAdapter(baseUrl: string, payload: Record<string, unkno
 }
 
 async function dispatch(request: DispatchRequest) {
-  const route = routeRequest(request);
+  const route = routeRequest(request, routingRules);
 
   if (route.worker === "knowledge") {
     const path = request.path;
