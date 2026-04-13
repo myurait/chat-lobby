@@ -3,8 +3,8 @@
 .idea/
 .vscode/
 
-# Local AI / tooling state
-.claude/
+# Local AI / tooling state (personal, not shared)
+.claude/settings.local.json
 
 # Environment
 .env
@@ -18,6 +18,3 @@ build/
 coverage/
 .cache/
 __pycache__/
-
-# Private development docs repo cloned into the main project root
-/development-docs/
