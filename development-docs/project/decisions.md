@@ -171,3 +171,13 @@ Record all non-trivial architecture, policy, and operational decisions.
 - Context: Milestone 1「前の続きが自然につながる」の出発点として、2つの構造選択肢を検討した。Option A は Git 正本と status store を継続情報源とする文書ベースの軽量 pilot。Option B は conversation continuity 専用の persistent store を今の段階で追加する方式。Autonomous Proceed Conditions に基づき、Option A を自律的に選択した（推奨が1つで理由記載済み、ユーザー好みで覆す余地が低い、後からの方針転換が容易）。
 - Decision: Milestone 1 は Option A（文書ベースの軽量 pilot）で進める。Option B（dedicated persistence layer）は `development-docs/project/features/01-feature-backlog.md` Feature 012 に deferred item として保持し、pilot の検証結果で昇格判断する。これは暫定的な出発点であり、最終形ではない。
 - Consequences: 新しい永続層を追加せずに「自然な再開」と「短い訂正で戻れること」を先に検証できる。ただし publish されていない純粋な会話文脈は pilot の情報源に含まれず、この不足が深刻と判明した場合は Feature 012 の昇格を検討する必要がある。
+
+---
+
+## ADR-018: ledger-flow フレームワークを ChatLobby に導入（init-and-done モデル）
+
+- Date: 2026-04-13
+- Status: Accepted
+- Context: 旧来の独自 governance 構造（`/development-docs/` を別 git repo として管理、独自ロール定義、独自ルール）が存在した。Devil's Advocate による全量監査で多数の指摘（設計と実装の乖離、ルール重複、コンテキスト圧力）が出たため、汎用フレームワーク `ledger-flow` を myurait/ledger-flow として独立開発し、その init-and-done モデルで ChatLobby に導入することとした。
+- Decision: ledger-flow のフレームワーク全体（rules/, roles/, templates/, scripts/）を `development-docs/rules/` に転写し、既存の進行ファイルを `development-docs/project/` に移行した。サブモジュール依存なし。ChatLobby は ledger-flow 起点から独立して運用する（フレームワーク改定への追従方針はプロジェクト側の判断）。
+- Consequences: CLAUDE.md はリダイレクタ（3行）となり、実体のロールルーターは `development-docs/entry-point.md`。AGENTS.md はハイブリッド方式で Codex/Copilot をサポート。ロール定義はフレームワーク提供の5ロール（Worker, Compliance Auditor, Code Quality Auditor, Devil's Advocate, Planning Lead）。開発フローは6必須ステップ + トリガー制。ledger-flow の変更は ChatLobby に自動伝達されないため、必要に応じて手動で取り込む必要がある。

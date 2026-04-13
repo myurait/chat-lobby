@@ -201,4 +201,87 @@
 
 ## Follow-Up Review History
 
-(修正後に follow-up review を追記する)
+### Entry 1
+
+- Date: 2026-04-13T18:45:00+09:00
+- Reviewer: Claude Opus 4.6 (1M context)
+- Base Commit: 69d4fe4
+- Review Type: Full review (follow-up)
+- Referenced Plan Items: C-01, C-02, C-03, C-04, H-01, H-02, H-03, H-04, H-05
+
+#### 検証方法
+
+- 修正コミット `69d4fe4` の diff（26 ファイル、318 insertions / 114 deletions）を全件確認
+- grep による旧パス残存検索（絶対パス、旧短縮パス、二重プレフィックス、旧ディレクトリ名）
+- 各指摘ファイルの該当行を直接読み取りで照合
+
+#### C-01: language-policy.md のプレースホルダー — 解消
+
+- `development-docs/rules/language-policy.md` 行 9-12 にプロジェクト固有値が正しく設定されている
+  - Development Language: TypeScript
+  - Documentation Language: Japanese
+  - Code-Internal Language: English
+  - Supported Product Languages: Japanese
+- `project-policies.md` の値と一致を確認
+- 行 7 の「The defaults below are placeholders.」の文言が残っているが、実際の値が設定済みであるため、フレームワーク提供側のテンプレート説明文として許容できる
+
+#### C-02: features/00-feature-index.md の絶対パス — 解消
+
+- 9箇所すべてが `development-docs/project/features/...` 形式の project-root-relative パスに修正されている
+- `/Users/fox4foofighter/` を含むパスは、project 配下のアクティブ文書に一切残存していない（レビュー証跡内の引用のみ）
+
+#### C-03: features/01-feature-backlog.md の絶対パス — 解消
+
+- Feature 003 と Feature 004 の Supporting Feature リンクが `development-docs/project/features/supporting/...` に修正されている
+- 絶対パスの残存なし
+
+#### C-04: historical-documents/INDEX.md の壊れたリンク — 解消
+
+- `chatlobby_development_plan.md` と `chatlobby_roadmap.md` の canonical successor がともに `development-docs/project/roadmap/archives/roadmap_20260405174901_initial-roadmap.md` に修正されている
+- 他のエントリ（`chatlobby-ideal-experience-spec-2026-04-09-v2.md`, `chatlobby_requirements.md`）のパスも全て project-root-relative に統一されている
+- トレーサビリティチェーンの断裂は解消
+
+#### H-01: knowledge.md の旧ディレクトリ名 development-logs/ — 解消
+
+- `development-docs/project/knowledge.md` 内に `development-logs/` への参照は一切残っていない（grep 確認済み）
+- 行 4 の `development-docs/project/logs/` への参照が正しいパスで記述されている
+- ログアーカイブ内の `development-logs/` 記述（`log_20260405193502.md` 等）は過去の作業記録であり、修正対象外として妥当
+
+#### H-02: design/04 のセクション番号参照 — 解消
+
+- 行 22 で `development-docs/rules/development-process.md` Section 3 を参照している
+- さらにパスも `development-docs/rules/development-process.md` の project-root-relative 形式に修正済み
+- `Section 5` への参照は本ファイル内に残存していない
+
+#### H-03: ADR-016 の記述と移行後の実態の矛盾 — 解消
+
+- ADR-016 Decision 句に `development-docs/rules/roles/` が正本格納先として明記されている
+- `.claude/agents/*.md` が Git で管理されていること（`.claude/settings.local.json` のみが gitignore 対象）が Decision 句に反映されている
+- `.gitignore` の実態（`.claude/settings.local.json` のみ ignore）と ADR-016 の記述が一致
+
+#### H-04: development-process.md の reviews/README.md 参照 — 解消
+
+- `development-docs/rules/development-process.md` 行 134 から `reviews/README.md` への参照が削除されている
+- 代わりに `development-docs/project/reviews/archives/` のみを除外対象として記載する形に修正されている
+
+#### H-05: 移行コンテンツ全般の旧パス短縮形 — 解消
+
+- 修正コミットで 26 ファイルにわたるパス修正が実施されている
+- project 配下のアクティブ文書（design, features, knowledge, roadmap, reference）において、以下の旧短縮パスパターンの残存を grep で確認: `design/0X-`, `features/0X-`, `roadmap/0X-`, `rules/development-process.md`, `rules/language-policy.md` — いずれも検出なし
+- `development-docs/development-docs/` の二重プレフィックスは検出なし
+- ログアーカイブ（`logs/archives/`）およびレビューアーカイブ（`reviews/archives/`）内の旧パス記述は、過去の作業記録やコマンド引用として残存しており、修正対象から除外されている。これは妥当な判断である（作業記録の改竄回避）
+- アクティブログ（`log_20260409165428.md`）内の `development-logs/` 参照 2 件は、いずれも過去の作業事実の記述（行 21: 旧ログの移動記録、行 131: 過去の rg コマンド引用）であり、現在のパス案内ではない。修正対象外として妥当
+
+#### 新たな findings
+
+なし。修正によって新たな矛盾や問題は発生していない。
+
+#### 残存リスクの disposition
+
+- 前回レビューの Medium/Low 指摘（M-01 から M-07、L-01 から L-03）は本 follow-up の対象外（Implementation Response Plan の Deferred Items に分類済み）
+- M-01（language-policy.md と project-policies.md の二重管理）: C-01 の修正により両ファイルの値は一致した。ただし「placeholders」という文言が language-policy.md に残っているため、両者の責務分担の明文化は依然として未実施。deferred planned work として次回レビューサイクルで確認
+- M-04（既存レビュー findings の持ち込み）: C-02, C-03, C-04 の修正により、旧レビューの C-1, C-2 は解消。残りの旧レビュー findings は次回レビューサイクルへ繰越
+
+#### 結論
+
+前回レビューの Critical 4 件および High 5 件は全て解消されている。修正は正確であり、新たな矛盾は発生していない。H-05 の広範囲パス修正（26 ファイル）においても、二重プレフィックスや修正漏れは検出されなかった。過去の作業記録内の旧パス残存は意図的な除外として妥当と判断する。
