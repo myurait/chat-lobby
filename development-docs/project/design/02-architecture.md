@@ -127,4 +127,4 @@ chatlobby/
 - Open WebUI の Pipelines でどこまで dispatcher ロジックを実装可能か
 - Claude Code の Remote Control と Agent SDK のどちらを主に使うか
 - Codex app-server の安定性と利用可能なイベント粒度
-- 会話継続の基盤: 現在は文書ベースの軽量 pilot（`design/04-conversation-continuity-foundation.md`）で進めている。publish 前の会話文脈の取り扱いが不足と判明した場合、dedicated persistence layer（Feature 012）への移行判断が必要
+- 会話継続の基盤: 現在は文書ベースの軽量 pilot（`development-docs/project/design/04-conversation-continuity-foundation.md`）で進めている。publish 前の会話文脈の取り扱いが不足と判明した場合、dedicated persistence layer（Feature 012）への移行判断が必要

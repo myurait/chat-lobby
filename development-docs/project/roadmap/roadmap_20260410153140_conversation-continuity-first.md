@@ -6,18 +6,18 @@
 - Owner: Codex agent (GPT-5)
 - Status: approved
 - Source ideal experience:
-  - `design/00-ideal-experience.md`
+  - `development-docs/project/design/00-ideal-experience.md`
 - Source reviews:
-  - `reviews/review_20260409142902_roadmap2-project-insight.md`
-  - `reviews/review_20260409150414_critical-review-development-flow-redesign.md`
-  - `reviews/review_20260409162349_instruction-coverage-audit-process-redesign.md`
+  - `development-docs/project/reviews/archives/review_20260409142902_roadmap2-project-insight.md`
+  - `development-docs/project/reviews/archives/review_20260409150414_critical-review-development-flow-redesign.md`
+  - `development-docs/project/reviews/archives/review_20260409162349_instruction-coverage-audit-process-redesign.md`
 - Source features:
-  - `features/epics/02-context-memory-continuity.md`
-  - `features/epics/03-thread-routing-and-conversation-reentry.md`
-  - `features/epics/04-project-elevation-and-frictionless-bootstrap.md`
-  - `features/epics/01-front-agent-supervision.md`
-  - `features/supporting/03-auto-thread-routing.md`
-  - `features/supporting/04-front-agent-worker-selection.md`
+  - `development-docs/project/features/epics/02-context-memory-continuity.md`
+  - `development-docs/project/features/epics/03-thread-routing-and-conversation-reentry.md`
+  - `development-docs/project/features/epics/04-project-elevation-and-frictionless-bootstrap.md`
+  - `development-docs/project/features/epics/01-front-agent-supervision.md`
+  - `development-docs/project/features/supporting/03-auto-thread-routing.md`
+  - `development-docs/project/features/supporting/04-front-agent-worker-selection.md`
 
 ## Goal
 
@@ -50,10 +50,10 @@
   - worker 自動選択の本実装
   - project 化フローの本実装
 - Dependencies:
-  - `design/00-ideal-experience.md`
-  - `features/epics/02-context-memory-continuity.md`
-  - `features/epics/03-thread-routing-and-conversation-reentry.md`
-  - `features/supporting/03-auto-thread-routing.md`
+  - `development-docs/project/design/00-ideal-experience.md`
+  - `development-docs/project/features/epics/02-context-memory-continuity.md`
+  - `development-docs/project/features/epics/03-thread-routing-and-conversation-reentry.md`
+  - `development-docs/project/features/supporting/03-auto-thread-routing.md`
 - Validation:
   - Scenario 1 と 2 について、「有力候補の提示」と「短い訂正での復帰」を会話シナリオで説明できる。
   - ユーザーが新規会話か継続会話かを毎回明示しなくても前へ進める最小体験が見える。
@@ -75,8 +75,8 @@
   - external provider expansion
 - Dependencies:
   - Milestone 1
-  - `features/epics/01-front-agent-supervision.md`
-  - `features/supporting/04-front-agent-worker-selection.md`
+  - `development-docs/project/features/epics/01-front-agent-supervision.md`
+  - `development-docs/project/features/supporting/04-front-agent-worker-selection.md`
 - Validation:
   - Scenario 1 と 4 を会話ベースで通せる。
   - ユーザーが依頼先判断を自分でしなくても前に進める。
@@ -98,7 +98,7 @@
 - Dependencies:
   - Milestone 1
   - Milestone 2
-  - `features/epics/04-project-elevation-and-frictionless-bootstrap.md`
+  - `development-docs/project/features/epics/04-project-elevation-and-frictionless-bootstrap.md`
 - Validation:
   - Scenario 3 を会話ベースで通せる。
   - ユーザーが「どの文書を作るか」を先に決めなくても骨組みへ進める。
@@ -112,10 +112,10 @@
 - Expected user-visible change:
   - まだ完成した自動接続ではないが、「前の続き」を自然につなぐために何を出し、どう訂正を受けるかが、会話体験として見える形になる。
 - Verification evidence:
-  - `design/04-conversation-continuity-foundation.md` — 継続会話境界、候補提示、correction flow の planning package
+  - `development-docs/project/design/04-conversation-continuity-foundation.md` — 継続会話境界、候補提示、correction flow の planning package
   - ADR-017 — 文書ベース pilot の構造選択記録
   - design/04 Section 9 — Scenario 1, 2 に対する validation scenario
-  - `features/supporting/03-auto-thread-routing.md` の blocker 状態更新済み
+  - `development-docs/project/features/supporting/03-auto-thread-routing.md` の blocker 状態更新済み
 
 ## Deferred Items
 
@@ -124,11 +124,11 @@
   - Why deferred:
     - 今回の roadmap は会話継続、project 化、front agent という中核体験を先に前進させるため
   - Where tracked:
-    - `features/01-feature-backlog.md`
+    - `development-docs/project/features/01-feature-backlog.md`
 
 - Deferred:
   - 公開準備
   - Why deferred:
     - 現時点では他者向け公開より、理想体験の中核を成立させる方が先
   - Where tracked:
-    - `features/01-feature-backlog.md`
+    - `development-docs/project/features/01-feature-backlog.md`

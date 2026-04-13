@@ -4,7 +4,7 @@
 
 - active roadmap Milestone 1「前の続きが自然につながる状態へ近づける」の planning package である。
 - ここで定義するのは **文書ベースの軽量 pilot** であり、会話継続の最終実装ではない。
-- dedicated persistence layer の追加は将来の enrichment path として `features/01-feature-backlog.md` Feature 012 に記録済みである。
+- dedicated persistence layer の追加は将来の enrichment path として `development-docs/project/features/01-feature-backlog.md` Feature 012 に記録済みである。
 - pilot の検証結果が、後続の memory model 設計判断の入力になる。
 
 ## 2. なぜ今これが必要か
@@ -19,9 +19,9 @@
 - Milestone 1 の出発点として、2つの構造選択肢を検討した。
   - **Option A**: 新しい persistence layer を追加せず、Git の canonical documents と recent task summaries を継続情報源として使う文書ベースの軽量 pilot。
   - **Option B**: Milestone 1 の段階で conversation continuity 専用の persistent store を追加し、会話要約や thread summaries を継続的に保持する。
-- Autonomous Proceed Conditions（`rules/development-process.md` Section 5）に基づき、Option A を自律的に選択した。
+- Autonomous Proceed Conditions（`development-docs/rules/development-process.md` Section 3）に基づき、Option A を自律的に選択した。
   - 推奨理由は design document に記載済み、合理的なユーザー好みで覆す余地が少ない、後からの方針転換が容易。
-- **Option A はこの pilot の出発点であり、最終形ではない。** Option B は `features/01-feature-backlog.md` Feature 012 に deferred item として保持されている。pilot の検証結果から、dedicated persistence layer が必要と判明した場合に昇格する。
+- **Option A はこの pilot の出発点であり、最終形ではない。** Option B は `development-docs/project/features/01-feature-backlog.md` Feature 012 に deferred item として保持されている。pilot の検証結果から、dedicated persistence layer が必要と判明した場合に昇格する。
 
 ## 4. 前提
 

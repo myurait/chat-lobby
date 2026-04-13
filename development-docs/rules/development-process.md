@@ -131,7 +131,7 @@ Each review role checks only the items within its responsibility. Items are not 
 - Name review evidence files as `review_{YYYYMMDDhhmmss}_{scope_description}.md`.
 - Keep `scope_description` concise, ASCII, and kebab-case.
 - Keep only the newest 5 review evidence files in `development-docs/project/reviews/`. Move older files to `development-docs/project/reviews/archives/`.
-- `development-docs/project/reviews/README.md`, `development-docs/rules/templates/review_template.md`, and `development-docs/project/reviews/archives/` are not counted as review evidence files.
+- `development-docs/rules/templates/review_template.md` and `development-docs/project/reviews/archives/` are not counted as review evidence files.
 - Record severity, affected files, decision rationale, implementation response plan, and follow-up result.
 - Record `Date` as the exact execution timestamp with timezone.
 - Record `Reviewer` explicitly. When the reviewer is AI, write the model name in the publicly disclosable form.

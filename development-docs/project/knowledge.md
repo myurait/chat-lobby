@@ -1,7 +1,7 @@
 # Project Knowledge
 
 This file stores reusable lessons that should survive beyond a single task or phase.
-Detailed chronology belongs in `development-logs/`.
+Detailed chronology belongs in `development-docs/project/logs/`.
 
 ## 1. Greenfield Workflow
 
@@ -21,23 +21,23 @@ Detailed chronology belongs in `development-logs/`.
 - `INDEX.md` is the development documentation entry point.
 - Design documents should evolve in visible project documents, not only in chat history.
 - General lessons belong here.
-- Detailed work history belongs in `development-logs/`.
+- Detailed work history belongs in `development-docs/project/logs/`.
 - Architecture documents (02) should provide an overview only. Delegate details to dedicated documents (single source of truth).
 - Documents must be split at an appropriate granularity. When a document starts accumulating multiple concerns or grows enough to slow understanding, create or update dedicated documents instead of continuing to append.
 - Existing documents must not be allowed to bloat through incremental append-only updates. Preserve readability by moving stable subsections into focused documents and keeping overview documents concise.
-- Principle-stable rule documents belong under `rules/`. Unless the user explicitly asks for a rule change, treat documents in `rules/` as non-editable during ordinary implementation work.
-- `rules/language-policy.md` is the canonical source for project-specific language settings and language-domain boundaries.
+- Principle-stable rule documents belong under `development-docs/rules/`. Unless the user explicitly asks for a rule change, treat documents in `development-docs/rules/` as non-editable during ordinary implementation work.
+- `development-docs/rules/language-policy.md` is the canonical source for project-specific language settings and language-domain boundaries.
 - Do not create or revise roadmaps without a trustworthy canonical ideal experience document. If one is missing or weak, run requirement discovery first.
-- `design/00-ideal-experience.md` is the canonical planning source for the ideal experience. Historical inputs belong under `reference/historical-documents/`, never as parallel active sources.
+- `development-docs/project/design/00-ideal-experience.md` is the canonical planning source for the ideal experience. Historical inputs belong under `development-docs/project/reference/historical-documents/`, never as parallel active sources.
 - Do not let raw request ledgers drive planning directly.
-- Use `features/supporting/` only for roadmap-adjacent candidates.
+- Use `development-docs/project/features/supporting/` only for roadmap-adjacent candidates.
 - Keep distant deferred requests in the backlog, but require them to record priority, order, blockers, experience tie, thickness, design impact, and current design constraints.
 - If a deferred backlog item is heavy or architectural, reflect its constraint in the active design documents before locking adjacent implementation.
 - Update the tech debt registry at the end of each phase.
-- Development logs use `development-logs/log_{YYYYMMDDhhmmss}.md` for the active file and `development-logs/archives/` for closed files.
-- Keep at most 20 entries in one development log file. If the next append would exceed 20 entries, move the current file to `development-logs/archives/` and create a new active file in `development-logs/`.
-- Review evidence uses `reviews/review_{YYYYMMDDhhmmss}_{scope_description}.md`, where `scope_description` is a concise kebab-case scope label.
-- Keep only the newest 5 review evidence files in `reviews/`. Move older evidence files to `reviews/archives/`.
+- Development logs use `development-docs/project/logs/log_{YYYYMMDDhhmmss}.md` for the active file and `development-docs/project/logs/archives/` for closed files.
+- Keep at most 20 entries in one development log file. If the next append would exceed 20 entries, move the current file to `development-docs/project/logs/archives/` and create a new active file in `development-docs/project/logs/`.
+- Review evidence uses `development-docs/project/reviews/review_{YYYYMMDDhhmmss}_{scope_description}.md`, where `scope_description` is a concise kebab-case scope label.
+- Keep only the newest 5 review evidence files in `development-docs/project/reviews/`. Move older evidence files to `development-docs/project/reviews/archives/`.
 - When the user decides a requested capability is outside the current roadmap, move it into a dedicated feature backlog document instead of leaving it as a pending roadmap phase.
 - A roadmap item is not ready unless it explains the intended user-visible change and how that change will be validated.
 

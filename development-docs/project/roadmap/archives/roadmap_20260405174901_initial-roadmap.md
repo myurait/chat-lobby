@@ -3,7 +3,7 @@
 ## Current Phase
 
 - Phase: Complete
-- Focus: Initial roadmap scope is complete through Phase F. Further work belongs in `features/`.
+- Focus: Initial roadmap scope is complete through Phase F. Further work belongs in `development-docs/project/features/`.
 
 ## Phase Policy
 
@@ -62,8 +62,8 @@
 
 ## Moved To Feature Backlog
 
-- 仕様差し戻しループの tool 化は、現段階の initial roadmap から外し、`features/01-feature-backlog.md` で管理する。
-- 他者が試せる状態へ整える公開準備も、次フェーズの目的とはせず、`features/01-feature-backlog.md` で管理する。
+- 仕様差し戻しループの tool 化は、現段階の initial roadmap から外し、`development-docs/project/features/01-feature-backlog.md` で管理する。
+- 他者が試せる状態へ整える公開準備も、次フェーズの目的とはせず、`development-docs/project/features/01-feature-backlog.md` で管理する。
 
 ## Deferred Cross-Cutting Tasks
 
@@ -124,7 +124,7 @@ Update this file at the end of each development cycle.
 - `reference/historical-documents` の内容のうち、運用境界、ワーカー役割、状態可視化方針、リポジトリ構成目標、初期優先順位、主要リスクを現行文書へ移送した。
 - 以後、歴史的経緯の確認を除き、通常作業で `reference/historical-documents` を読む前提を置かない。
 - `reference/my-project-template/` をローカル参照用に clone し、開発ドキュメンテーションルールの正本参照元として位置づけた。clone 自体は Git 管理から除外した。
-- 文書粒度ルールを `knowledge.md` に明記し、肥大化していた `rules/coding-conventions.md` を `rules/development-process.md` へ分割した。
+- 文書粒度ルールを `development-docs/project/knowledge.md` に明記し、肥大化していた `development-docs/rules/coding-conventions.md` を `development-docs/rules/development-process.md` へ分割した。
 - 原則不変の規約文書を `rules/` 配下へ集約し、通常作業で更新しない文書群として分離した。
 - `open-terminal` のホスト側作業領域を `./workspace` mount に限定し、`workspace/templates/chatlobby-canonical/` に共有正本テンプレートを追加した。
 - この変更により、Phase A の「Open Terminal の Docker 隔離有効化」と「共有 Git リポジトリの初期構成を固定」を実装面で完了とした。

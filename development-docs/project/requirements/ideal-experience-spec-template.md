@@ -4,10 +4,10 @@ Use this template to normalize the active ideal experience document after requir
 
 ## Output Rule
 
-- The canonical output path is `design/00-ideal-experience.md`.
+- The canonical output path is `development-docs/project/design/00-ideal-experience.md`.
 - Do not create a second active ideal experience document with another filename.
-- If this document is derived from interviews, imported specifications, or superseded drafts, archive those source materials under `reference/historical-documents/`.
-- Add or update the corresponding entry in `reference/historical-documents/INDEX.md`.
+- If this document is derived from interviews, imported specifications, or superseded drafts, archive those source materials under `development-docs/project/reference/historical-documents/`.
+- Add or update the corresponding entry in `development-docs/project/reference/historical-documents/INDEX.md`.
 
 ## 1. Purpose
 

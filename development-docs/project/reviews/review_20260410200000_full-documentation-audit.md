@@ -23,27 +23,27 @@
 
 ### Critical
 
-- C-1: `features/00-feature-index.md` にハードコードされた絶対パス
+- C-1: `development-docs/project/features/00-feature-index.md` にハードコードされた絶対パス
   - ファイル: `/Users/fox4foofighter/dev/chat-lobby/development-docs/features/00-feature-index.md`
   - 9箇所に `/Users/fox4foofighter/dev/chat-lobby/development-docs/` で始まる絶対パスが使われている。OSS 公開を目標に掲げながら、ローカルマシンの絶対パスが文書に焼き込まれている。他者が clone しても全リンクが壊れる。相対パスに修正すべき。
 
 - C-2: `reference/historical-documents/INDEX.md` に存在しないファイルへの参照
   - ファイル: `/Users/fox4foofighter/dev/chat-lobby/development-docs/reference/historical-documents/INDEX.md`
-  - `chatlobby_development_plan.md` と `chatlobby_roadmap.md` の canonical successor に `roadmap/01-initial-roadmap.md` が記載されているが、このファイルは存在しない。実際のアーカイブ済みロードマップは `roadmap/archives/roadmap_20260405174901_initial-roadmap.md` にある。壊れた参照がトレーサビリティチェーンを断っている。
+  - `chatlobby_development_plan.md` と `chatlobby_roadmap.md` の canonical successor に `development-docs/project/roadmap/archives/roadmap_20260405174901_initial-roadmap.md` が記載されているが、このファイルは存在しない。実際のアーカイブ済みロードマップは `development-docs/project/roadmap/archives/roadmap_20260405174901_initial-roadmap.md` にある。壊れた参照がトレーサビリティチェーンを断っている。
 
 ### High
 
 - H-1: レビュー証跡ファイルが上限 5 件を超えている（6 件）
   - ファイル: `/Users/fox4foofighter/dev/chat-lobby/development-docs/reviews/`
-  - `development-process.md` Section 1 および `reviews/README.md` は「最新 5 件のみ reviews/ に保持、古いファイルは archives/ へ移す」と定める。現在 6 件のレビュー証跡ファイルが reviews/ 直下に存在する。特に `review_20260409164528_roadmap-active-archive-structure.md` は development log Entry 8 で「archives/ へ移した」と記録されているにもかかわらず、reviews/ 直下に残り archives/ に存在しない。ログの記録が虚偽になっている。
+  - `development-process.md` Section 1 および `development-docs/project/reviews/README.md` は「最新 5 件のみ reviews/ に保持、古いファイルは archives/ へ移す」と定める。現在 6 件のレビュー証跡ファイルが reviews/ 直下に存在する。特に `review_20260409164528_roadmap-active-archive-structure.md` は development log Entry 8 で「archives/ へ移した」と記録されているにもかかわらず、reviews/ 直下に残り archives/ に存在しない。ログの記録が虚偽になっている。
 
 - H-2: 開発ログ Entry 8 で言及されたレビューファイルが存在しない
   - ファイル: `/Users/fox4foofighter/dev/chat-lobby/development-docs/development-logs/log_20260409165428.md` Entry 8
-  - `reviews/review_20260410155928_conversation-continuity-foundation.md` を追加したと記録されているが、このファイルはリポジトリに存在しない。ログで記録された作業成果物が実際には存在しないため、トレーサビリティが壊れている。
+  - `development-docs/project/reviews/review_20260410155928_conversation-continuity-foundation.md` を追加したと記録されているが、このファイルはリポジトリに存在しない。ログで記録された作業成果物が実際には存在しないため、トレーサビリティが壊れている。
 
-- H-3: `design/03-tech-debt-registry.md` が Markdown テーブルで書かれている
+- H-3: `development-docs/project/design/03-tech-debt-registry.md` が Markdown テーブルで書かれている
   - ファイル: `/Users/fox4foofighter/dev/chat-lobby/development-docs/design/03-tech-debt-registry.md`
-  - `knowledge.md` Section 3 および `reviews/README.md` は「レビュー証跡に Markdown テーブルを使わない」としている。tech debt registry は設計文書だがレビュー系文書ではないため厳密にはルール外だが、`coding-conventions.md` のユーザー向けグローバル CLAUDE.md にも「外部出力ではテーブルを使わずリストで代替する」とある。このテーブルはセルの横幅が極端に長く、可読性が壊れている。
+  - `knowledge.md` Section 3 および `development-docs/project/reviews/README.md` は「レビュー証跡に Markdown テーブルを使わない」としている。tech debt registry は設計文書だがレビュー系文書ではないため厳密にはルール外だが、`coding-conventions.md` のユーザー向けグローバル CLAUDE.md にも「外部出力ではテーブルを使わずリストで代替する」とある。このテーブルはセルの横幅が極端に長く、可読性が壊れている。
 
 - H-4: `knowledge.md` の言語分類が曖昧
   - ファイル: `/Users/fox4foofighter/dev/chat-lobby/development-docs/knowledge.md`
@@ -75,7 +75,7 @@
 - M-4: epics の feature_template.md と実際の epic 文書の構造不一致
   - `features/feature_template.md` には `Roadmap Readiness` と `Validation Scenarios` セクションがあるが、epics（01--06）にはこれらが無い。代わりに epics は `Promotion Condition` のみを持つ。テンプレートが epics に適用されるのか supporting features にのみ適用されるのかが不明。epic 用テンプレートが存在しないのに、epics が一貫した構造で書かれている。暗黙のテンプレートが存在しているが文書化されていない。
 
-- M-5: `design/01-project-charter.md` が完全に日本語で書かれている
+- M-5: `development-docs/project/design/01-project-charter.md` が完全に日本語で書かれている
   - ファイル: `/Users/fox4foofighter/dev/chat-lobby/development-docs/design/01-project-charter.md`
   - `language-policy.md` の Document Language Rules で、設計文書は「Documents that evolve with project progress should be written in Documentation Language」に該当するため日本語で正しいと解釈できる。しかし project charter は通常、変更頻度が低く principle-stable に近い。rule documents と project-progress documents の境界にある文書の分類が曖昧。
 
@@ -120,7 +120,7 @@
 - L-4: `development-logs/log_template.md` の期間フィールドが単一値
   - テンプレートの `Period:` は単一日付のみを想定しているが、実際のログは複数日にまたがる。
 
-- L-5: `features/epics/` の番号体系にギャップが予想される
+- L-5: `development-docs/project/features/epics/` の番号体系にギャップが予想される
   - 現在 01--06 の 6 件。これらが全て `candidate` ステータスであり、ロードマップに直接マッピングされているのは 3 件（02, 03, 04 -> Milestones 1, 2, 3 を介して間接参照）。残り 3 件（01, 05, 06）はロードマップから直接参照されていない。
 
 ---
@@ -145,7 +145,7 @@
 - Intended experience change:
   - 文書構造自体は「AI エージェントが自律的に開発を進められる」という体験を支えるために設計されている。この目的に対しては構造の深さに一定の妥当性がある。ただし、agent が守れないほど多いルールは agent の信頼性を下げる。
 - Validation completeness:
-  - ロードマップの validation scenario は会話シナリオベースで定義されており適切。ただし Milestone 1 の Active Cycle Candidate にある verification evidence の 1 つ（`reviews/review_20260410155928_conversation-continuity-foundation.md`）が存在しない（H-2）。
+  - ロードマップの validation scenario は会話シナリオベースで定義されており適切。ただし Milestone 1 の Active Cycle Candidate にある verification evidence の 1 つ（`development-docs/project/reviews/review_20260410155928_conversation-continuity-foundation.md`）が存在しない（H-2）。
 
 ### Tech Lead Review
 

@@ -5,7 +5,7 @@
 - Feature ID: epic-002
 - Date: 2026-04-09
 - Status: candidate
-- Source: `reference/historical-documents/chatlobby-ideal-experience-spec-2026-04-09-v2.md`, `design/00-ideal-experience.md`, review `review_20260409142902_roadmap2-project-insight.md`
+- Source: `development-docs/project/reference/historical-documents/chatlobby-ideal-experience-spec-2026-04-09-v2.md`, `development-docs/project/design/00-ideal-experience.md`, review `development-docs/project/reviews/archives/review_20260409142902_roadmap2-project-insight.md`
 
 ## Problem
 
@@ -33,8 +33,8 @@
 - Required inputs:
   - ideal experience
 - Related docs:
-  - `design/00-ideal-experience.md`
-  - `design/04-conversation-continuity-foundation.md` (Milestone 1 planning package)
+  - `development-docs/project/design/00-ideal-experience.md`
+  - `development-docs/project/design/04-conversation-continuity-foundation.md` (Milestone 1 planning package)
 
 ## Decision Inputs
 

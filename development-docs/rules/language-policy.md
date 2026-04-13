@@ -6,10 +6,10 @@ This policy applies to all project output including review evidence, development
 
 These values are set per adopting project. The defaults below are placeholders.
 
-- Development Language: (set during project setup)
-- Documentation Language: (set during project setup)
+- Development Language: TypeScript
+- Documentation Language: Japanese
 - Code-Internal Language: English
-- Supported Product Languages: (set during project setup)
+- Supported Product Languages: Japanese
 - Canonical Source: This document is the authoritative source for project-specific language decisions and language-domain rules.
 
 ## Language Categories

@@ -6,7 +6,7 @@ This file is the structured deferred request ledger. Use it to keep non-roadmap 
 
 - Purpose: active roadmap の外にある request を、将来の planning input として十分な情報量で保持する
 - Rule: この文書の項目は deferred request であり、そのまま implementation-ready ではない
-- Rule: `near` の項目だけが `features/supporting/` へ昇格する候補になる
+- Rule: `near` の項目だけが `development-docs/project/features/supporting/` へ昇格する候補になる
 - Rule: `heavy` または `architectural` な項目は、現在の実装がその将来設計を潰さないよう制約を明記する
 
 ## Deferred Request Ledger
@@ -69,7 +69,7 @@ This file is the structured deferred request ledger. Use it to keep non-roadmap 
 - Current Design Constraint:
   - thread / project のデータ境界や routing 前提を、将来の auto-connect と correction flow を無視して固定しない
 - Supporting Feature:
-  - [03-auto-thread-routing.md](/Users/fox4foofighter/dev/chat-lobby/development-docs/features/supporting/03-auto-thread-routing.md)
+  - [03-auto-thread-routing.md](development-docs/project/features/supporting/03-auto-thread-routing.md)
 - Why Not In Roadmap Yet:
   - memory model と correction flow の設計がまだ先に必要である
 
@@ -91,7 +91,7 @@ This file is the structured deferred request ledger. Use it to keep non-roadmap 
 - Current Design Constraint:
   - 現在の dispatcher や adapter interface を、front agent 不在の最終形として固定しない
 - Supporting Feature:
-  - [04-front-agent-worker-selection.md](/Users/fox4foofighter/dev/chat-lobby/development-docs/features/supporting/04-front-agent-worker-selection.md)
+  - [04-front-agent-worker-selection.md](development-docs/project/features/supporting/04-front-agent-worker-selection.md)
 - Why Not In Roadmap Yet:
   - front agent の責務境界が未確定であり、先に設計判断が必要
 

@@ -34,7 +34,7 @@
 - Required inputs:
   - `epic-001` front agent supervision
 - Related docs:
-  - `features/epics/01-front-agent-supervision.md`
+  - `development-docs/project/features/epics/01-front-agent-supervision.md`
 
 ## Decision Inputs
 
@@ -59,8 +59,8 @@
 ## Validation Scenarios
 
 - Representative scenarios:
-  - `design/00-ideal-experience.md` Scenario 1
-  - `design/00-ideal-experience.md` Scenario 4
+  - `development-docs/project/design/00-ideal-experience.md` Scenario 1
+  - `development-docs/project/design/00-ideal-experience.md` Scenario 4
 - Failure signals:
   - ユーザーがどの worker を使うべきか自分で判断しないと前に進めない
   - worker 実行結果が前面会話として整理されず、生の作業ログの寄せ集めになる

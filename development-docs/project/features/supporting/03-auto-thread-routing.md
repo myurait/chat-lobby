@@ -35,9 +35,9 @@
   - `epic-002` context memory continuity
   - `epic-003` thread routing and conversation reentry
 - Related docs:
-  - `features/epics/02-context-memory-continuity.md`
-  - `features/epics/03-thread-routing-and-conversation-reentry.md`
-  - `design/04-conversation-continuity-foundation.md` (Milestone 1 planning package)
+  - `development-docs/project/features/epics/02-context-memory-continuity.md`
+  - `development-docs/project/features/epics/03-thread-routing-and-conversation-reentry.md`
+  - `development-docs/project/design/04-conversation-continuity-foundation.md` (Milestone 1 planning package)
 
 ## Decision Inputs
 
@@ -63,8 +63,8 @@
 ## Validation Scenarios
 
 - Representative scenarios:
-  - `design/00-ideal-experience.md` Scenario 1
-  - `design/00-ideal-experience.md` Scenario 2
+  - `development-docs/project/design/00-ideal-experience.md` Scenario 1
+  - `development-docs/project/design/00-ideal-experience.md` Scenario 2
 - Failure signals:
   - 新規会話か継続会話かの確認を毎回ユーザーへ返してしまう
   - 誤接続したあとに会話だけで別文脈へ戻れない

@@ -154,12 +154,12 @@ Record all non-trivial architecture, policy, and operational decisions.
 
 ---
 
-## ADR-016: エージェントロール定義の格納先として development-docs/roles/ を新設する
+## ADR-016: エージェントロール定義の格納先として development-docs/rules/roles/ を新設する
 
 - Date: 2026-04-10
 - Status: Accepted
-- Context: AI エージェントに特定の役割（Devil's Advocate レビュアーなど）を割り当てる必要が生じた。ロール定義はツール非依存であるべきだが、格納先が無かった。`.claude/agents/` は Claude Code 固有かつ git-ignored であり、バージョン管理される正本としては不適切。
-- Decision: `development-docs/roles/` を新設し、エージェントロール定義の正本格納先とする。ロールファイルは stable rule document として英語で記述する。ツール固有のラッパー（`.claude/agents/` 等）は正本を参照するだけの local convenience とし、バージョン管理には含めない。
+- Context: AI エージェントに特定の役割（Devil's Advocate レビュアーなど）を割り当てる必要が生じた。ロール定義はツール非依存であるべきだが、格納先が無かった。`.claude/agents/` は Claude Code 固有であり、正本とは別の位置づけが必要だった。
+- Decision: `development-docs/rules/roles/` を新設し、エージェントロール定義の正本格納先とする。ロールファイルは stable rule document として英語で記述する。ツール固有のラッパー（`.claude/agents/` 等）は正本を参照するだけの local convenience とする。`.claude/agents/*.md` は Git で管理されており（`.claude/settings.local.json` のみが gitignore 対象）、ローカルで利用可能な状態を維持する。
 - Consequences: ロール定義がプロジェクト文書として一元管理される。Claude Code 以外のランタイム（Codex 等）も同一の定義を参照可能になる。ツール固有ラッパーはユーザーが自分でプロビジョニングする必要がある。
 
 ---
@@ -169,5 +169,5 @@ Record all non-trivial architecture, policy, and operational decisions.
 - Date: 2026-04-10
 - Status: Accepted
 - Context: Milestone 1「前の続きが自然につながる」の出発点として、2つの構造選択肢を検討した。Option A は Git 正本と status store を継続情報源とする文書ベースの軽量 pilot。Option B は conversation continuity 専用の persistent store を今の段階で追加する方式。Autonomous Proceed Conditions に基づき、Option A を自律的に選択した（推奨が1つで理由記載済み、ユーザー好みで覆す余地が低い、後からの方針転換が容易）。
-- Decision: Milestone 1 は Option A（文書ベースの軽量 pilot）で進める。Option B（dedicated persistence layer）は `features/01-feature-backlog.md` Feature 012 に deferred item として保持し、pilot の検証結果で昇格判断する。これは暫定的な出発点であり、最終形ではない。
+- Decision: Milestone 1 は Option A（文書ベースの軽量 pilot）で進める。Option B（dedicated persistence layer）は `development-docs/project/features/01-feature-backlog.md` Feature 012 に deferred item として保持し、pilot の検証結果で昇格判断する。これは暫定的な出発点であり、最終形ではない。
 - Consequences: 新しい永続層を追加せずに「自然な再開」と「短い訂正で戻れること」を先に検証できる。ただし publish されていない純粋な会話文脈は pilot の情報源に含まれず、この不足が深刻と判明した場合は Feature 012 の昇格を検討する必要がある。

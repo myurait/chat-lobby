@@ -5,7 +5,7 @@
 - Feature ID: epic-006
 - Date: 2026-04-09
 - Status: candidate
-- Source: `reference/historical-documents/chatlobby-ideal-experience-spec-2026-04-09-v2.md`, `design/00-ideal-experience.md`
+- Source: `development-docs/project/reference/historical-documents/chatlobby-ideal-experience-spec-2026-04-09-v2.md`, `development-docs/project/design/00-ideal-experience.md`
 
 ## Problem
 
@@ -34,7 +34,7 @@
   - project elevation flow
   - front agent responsibility
 - Related docs:
-  - `design/00-ideal-experience.md`
+  - `development-docs/project/design/00-ideal-experience.md`
 
 ## Decision Inputs
 

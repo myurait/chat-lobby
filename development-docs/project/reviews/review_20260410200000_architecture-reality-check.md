@@ -25,8 +25,8 @@
   - README の Development Docs セクションに `development-docs/roadmap/01-initial-roadmap.md` が記載されているが、このファイルは存在しない。実際の active roadmap は `development-docs/roadmap/roadmap_20260410153140_conversation-continuity-first.md` であり、archived roadmap は `development-docs/roadmap/archives/roadmap_20260405174901_initial-roadmap.md` にある。README を読んで参照した利用者は必ず 404 に遭遇する。これはプロジェクトの入口文書として致命的。
 
 - **C-02: review evidence ファイルが 5 件上限を 1 件超過している**
-  - ルール: `development-process.md` Section 1 "Keep only the newest 5 review evidence files in `reviews/`; older files belong under `reviews/archives/`."
-  - 現状: `reviews/` に evidence ファイルが 6 件（本レビューを含めると 7 件）存在している。最古の `review_20260409164528_roadmap-active-archive-structure.md` が archive されていない。開発プロセスルール違反。
+  - ルール: `development-process.md` Section 1 "Keep only the newest 5 review evidence files in `development-docs/project/reviews/`; older files belong under `reviews/archives/`."
+  - 現状: `development-docs/project/reviews/` に evidence ファイルが 6 件（本レビューを含めると 7 件）存在している。最古の `review_20260409164528_roadmap-active-archive-structure.md` が archive されていない。開発プロセスルール違反。
 
 ### High
 
@@ -70,7 +70,7 @@
   - ファイル: `services/dispatcher/src/server.ts` 70行目
   - ADR-013 は「ルール更新は `rules.json` と `docs/operations/routing-policy.md` の同期で運用する」と述べている。しかし `loadRoutingRules` は起動時に `readFileSync` で 1 回だけ呼ばれる。ルール変更はサービス再起動が必須。運用文書にその記載がない。
 
-- **M-03: `design/02-architecture.md` の Open Questions に記載の内容と実装状態の乖離**
+- **M-03: `development-docs/project/design/02-architecture.md` の Open Questions に記載の内容と実装状態の乖離**
   - ファイル: `development-docs/design/02-architecture.md` 126-130行目
   - "Open WebUI の Pipelines でどこまで dispatcher ロジックを実装可能か" -- 結論として Pipelines ではなく host-side dispatcher を実装した。この question は resolved として記録されるべき。
   - "Claude Code の Remote Control と Agent SDK のどちらを主に使うか" -- 実装は `claude -p` CLI を使っており、Remote Control も Agent SDK も使っていない。この question も resolved として記録されるべき。
@@ -234,4 +234,4 @@
 
 - `docs/operations/routing-policy.md` -- ADR-013 が「ルール更新は `rules.json` と `docs/operations/routing-policy.md` の同期で運用する」と述べている。このファイルは存在するが、rules.json との同期が実際に行われているかは未検証。
 - `workspace/templates/chatlobby-canonical/` -- ADR-006 で定義されたテンプレート構成。docs/, specs/, decisions/, worklog/, src/ が存在する。publish tool はこれを前提に動作する。ただし実際の運用でこのテンプレートが使われている証跡は限定的。
-- conversation continuity pilot の design doc（`design/04-conversation-continuity-foundation.md`）-- 設計文書は完成しているが、実装は未着手。roadmap の Active Cycle Candidate に「planning package と最小 pilot 定義を作る」とあり、design doc がその成果物と解釈できるため、dead end ではなく work in progress。ただし design doc の Section 10 が「実装境界」を定義しているのに実装がないのは、文書が実態より先走っている状態。
+- conversation continuity pilot の design doc（`development-docs/project/design/04-conversation-continuity-foundation.md`）-- 設計文書は完成しているが、実装は未着手。roadmap の Active Cycle Candidate に「planning package と最小 pilot 定義を作る」とあり、design doc がその成果物と解釈できるため、dead end ではなく work in progress。ただし design doc の Section 10 が「実装境界」を定義しているのに実装がないのは、文書が実態より先走っている状態。

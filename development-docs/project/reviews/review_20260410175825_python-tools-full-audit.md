@@ -66,7 +66,7 @@
   - 全6つの pipe ファイル (`chatlobby_publish_pipe.py`, `chatlobby_claude_task_pipe.py`, `chatlobby_codex_task_pipe.py`, `chatlobby_knowledge_query_pipe.py`, `chatlobby_dispatch_task_pipe.py`, `chatlobby_status_panel_pipe.py`) に対するテストが存在しない。
   - `tools/openwebui_sync.py` のテストも存在しない。
   - `tests/` ディレクトリには TypeScript service のテスト（`test_dispatcher.py`, `test_codex_adapter.py`, `test_status_store.py`, `test_knowledge_adapter.py`）と `test_publish_to_repo.py` はあるが、pipe のユニットテストはゼロ。
-  - `rules/testing.md` Section 5: "New code must have tests." に対する違反。
+  - `development-docs/rules/testing.md` Section 5: "New code must have tests." に対する違反。
   - 影響: pipe ロジックの回帰検知不能
 
 - **H-05: `_extract_payload_text` の markdown fence 解析が脆弱**
@@ -178,7 +178,7 @@
 - ADR-007: publish_to_repo.py CLI が存在 -- 準拠。
 - ADR-008: pipe から publish CLI を呼ぶ構成 -- 準拠。ただし C-01 の repo パス制限不在が安全性を損なう。
 - ADR-014: bearer token による保護 -- pipe 側は valve で token を保持し adapter に送信。準拠。ただし token が空でも request は送信される（adapter 側で弾く前提）。
-- `design/02-architecture.md` の Operating Model: "Open WebUI 本体への改変は最小化" -- pipe は function registry 経由の登録で準拠。
+- `development-docs/project/design/02-architecture.md` の Operating Model: "Open WebUI 本体への改変は最小化" -- pipe は function registry 経由の登録で準拠。
 
 #### Senior-Engineer Smell Detection
 

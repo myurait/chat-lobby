@@ -28,7 +28,7 @@ This index tracks planning and design inputs that were superseded or normalized 
 - Archive Reason: raw user-provided ideal experience input was normalized into the canonical planning document.
 - Summary: original long-form ideal experience specification that established the front-agent, continuity, project-elevation, orchestration, and knowledge-loop vision.
 - Canonical Successors:
-  - `design/00-ideal-experience.md`
+  - `development-docs/project/design/00-ideal-experience.md`
 - Notes:
   - Keep this file for traceability to the original user wording.
 
@@ -38,9 +38,9 @@ This index tracks planning and design inputs that were superseded or normalized 
 - Archive Reason: legacy planning source preserved after normalization into the maintained document system.
 - Summary: early development plan that informed the current roadmap and process documents.
 - Canonical Successors:
-  - `roadmap/01-initial-roadmap.md`
-  - `design/02-architecture.md`
-  - `decisions.md`
+  - `development-docs/project/roadmap/archives/roadmap_20260405174901_initial-roadmap.md`
+  - `development-docs/project/design/02-architecture.md`
+  - `development-docs/project/decisions.md`
 
 ### chatlobby_requirements.md
 
@@ -48,9 +48,9 @@ This index tracks planning and design inputs that were superseded or normalized 
 - Archive Reason: legacy requirements source preserved after normalization into maintained design documents.
 - Summary: early requirements capture for ChatLobby before the current design and planning structure existed.
 - Canonical Successors:
-  - `design/00-ideal-experience.md`
-  - `design/01-project-charter.md`
-  - `design/02-architecture.md`
+  - `development-docs/project/design/00-ideal-experience.md`
+  - `development-docs/project/design/01-project-charter.md`
+  - `development-docs/project/design/02-architecture.md`
 
 ### chatlobby_roadmap.md
 
@@ -58,5 +58,5 @@ This index tracks planning and design inputs that were superseded or normalized 
 - Archive Reason: legacy roadmap preserved after migration to maintained roadmap and feature documents.
 - Summary: early roadmap framing before the current roadmap and feature separation rules were introduced.
 - Canonical Successors:
-  - `roadmap/01-initial-roadmap.md`
-  - `features/01-feature-backlog.md`
+  - `development-docs/project/roadmap/archives/roadmap_20260405174901_initial-roadmap.md`
+  - `development-docs/project/features/01-feature-backlog.md`
